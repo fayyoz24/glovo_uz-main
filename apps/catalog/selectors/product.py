@@ -10,11 +10,20 @@ def _base_available_qs():
     )
 
 
-def get_products_for_branch(branch_id):
+def get_products_for_branch(branch_id, category_id=None, search=""):
     """Products belonging to a specific branch OR shared across all branches (branch=null)."""
-    return _base_available_qs().filter(
+    qs = _base_available_qs().filter(
         Q(branch_id=branch_id) | Q(branch__isnull=True)
     )
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+    if search:
+        qs = qs.filter(
+            Q(name_ru__icontains=search)
+            | Q(name_uz__icontains=search)
+            | Q(description_ru__icontains=search)
+        )
+    return qs
 
 
 def get_products_for_merchant(merchant_id, category_id=None):
