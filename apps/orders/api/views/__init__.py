@@ -30,6 +30,7 @@ class CheckoutView(views.APIView):
 
     def post(self, request):
         serializer = CheckoutSerializer(data=request.data)
+        print("DEBUG request.user:", request.user.id, request.user.phone)
         serializer.is_valid(raise_exception=True)
         d = serializer.validated_data
 

@@ -64,11 +64,16 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         ]
 
 
+# class CheckoutSerializer(serializers.Serializer):
+#     address_id = serializers.IntegerField()
+#     payment_method = serializers.ChoiceField(choices=PaymentMethod.choices)
+#     tip_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0)
+# # apps/orders/api/serializers.py
+
 class CheckoutSerializer(serializers.Serializer):
-    address_id = serializers.IntegerField()
+    address_id = serializers.UUIDField()
     payment_method = serializers.ChoiceField(choices=PaymentMethod.choices)
     tip_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0)
-
 
 class CancelOrderSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=50, required=False, default="customer_request")

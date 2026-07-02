@@ -56,7 +56,11 @@ class AddToCartSerializer(serializers.Serializer):
     modifier_option_ids = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list
     )
-    instructions = serializers.CharField(max_length=512, required=False, default="")
+    # allow_blank=True qo'shildi — bo'sh string ("") yuborilganda ham
+    # 400 xato bermasligi kerak, chunki izoh ixtiyoriy.
+    instructions = serializers.CharField(
+        max_length=512, required=False, allow_blank=True, default=""
+    )
 
 
 class UpdateCartItemSerializer(serializers.Serializer):

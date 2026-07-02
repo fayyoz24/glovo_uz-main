@@ -8,8 +8,9 @@ from apps.carts.services import (
     remove_cart_item,
     clear_cart,
     apply_promo_code,
-    get_or_create_active_cart
+    get_or_create_active_cart,
 )
+from apps.carts.selectors import get_active_cart
 from apps.carts.api.serializers import (
     CartSerializer,
     AddToCartSerializer,
@@ -37,7 +38,7 @@ class CartItemAddView(views.APIView):
         serializer.is_valid(raise_exception=True)
         d = serializer.validated_data
         try:
-            item = add_item_to_cart(
+            add_item_to_cart(
                 user=request.user,
                 product_id=d["product_id"],
                 variant_id=d.get("variant_id"),
@@ -47,7 +48,11 @@ class CartItemAddView(views.APIView):
             )
         except CartBranchConflict as e:
             return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
-        return Response({"id": str(item.id)}, status=status.HTTP_201_CREATED)
+
+        # To'liq yangilangan cart holatini qaytaramiz, faqat item id emas —
+        # frontend shu response asosida cart state'ni yangilaydi.
+        cart = get_active_cart(request.user)
+        return Response(CartSerializer(cart).data, status=status.HTTP_201_CREATED)
 
 
 class CartItemUpdateView(views.APIView):
@@ -61,7 +66,8 @@ class CartItemUpdateView(views.APIView):
             update_cart_item(user=request.user, item_id=pk, qty=serializer.validated_data["qty"])
         except CartItemNotFound as e:
             return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        cart = get_active_cart(request.user)
+        return Response(CartSerializer(cart).data)
 
 
 class CartItemDeleteView(views.APIView):
@@ -73,7 +79,8 @@ class CartItemDeleteView(views.APIView):
             remove_cart_item(user=request.user, item_id=pk)
         except CartItemNotFound as e:
             return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        cart = get_active_cart(request.user)
+        return Response(CartSerializer(cart).data)
 
 
 class CartApplyPromoView(views.APIView):

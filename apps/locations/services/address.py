@@ -1,25 +1,24 @@
 from django.db import transaction
 from apps.locations.models import Address
-from apps.locations.selectors import get_address_by_id
+from apps.locations.selectors import get_address_by_id, get_user_address_or_404
 from apps.locations.exceptions import AddressNotFound, AddressLimitExceeded
 
 ADDRESS_LIMIT_PER_USER = 10
 
 
-def create_address(user, validated_data: dict) -> Address:
-    count = Address.objects.filter(user=user).count()
-    if count >= ADDRESS_LIMIT_PER_USER:
-        raise AddressLimitExceeded()
+DEFAULT_CITY = "Qarshi"
 
-    with transaction.atomic():
-        address = Address.objects.create(user=user, **validated_data)
+# apps/locations/services.py
+
+def create_address(user, validated_data: dict) -> Address:
+    validated_data.pop("city", None)  # xavfsizlik uchun, model default'i o'zi ishlaydi
+    address = Address.objects.create(user=user, **validated_data)
     return address
 
 
-def update_address(user, address_id, validated_data: dict) -> Address:
-    address = get_address_by_id(address_id, user=user)
-    if not address:
-        raise AddressNotFound()
+def update_address(user, pk, validated_data: dict) -> Address:
+    validated_data.pop("city", None)
+    address = get_user_address_or_404(user, pk)
     for field, value in validated_data.items():
         setattr(address, field, value)
     address.save()

@@ -16,7 +16,9 @@ class AddressListCreateView(APIView):
         return Response(AddressSerializer(addresses, many=True).data)
 
     def post(self, request):
-        serializer = AddressSerializer(data=request.data)
+        data = request.data.copy()
+        data.pop("city", None)  # client yuborsa ham e'tiborsiz qoldiriladi
+        serializer = AddressSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         address = create_address(request.user, serializer.validated_data)
         return Response(AddressSerializer(address).data, status=status.HTTP_201_CREATED)
@@ -26,7 +28,9 @@ class AddressDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        serializer = AddressSerializer(data=request.data, partial=True)
+        data = request.data.copy()
+        data.pop("city", None)  # client yuborsa ham e'tiborsiz qoldiriladi
+        serializer = AddressSerializer(data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         address = update_address(request.user, pk, serializer.validated_data)
         return Response(AddressSerializer(address).data)

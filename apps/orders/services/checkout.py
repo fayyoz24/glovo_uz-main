@@ -30,6 +30,8 @@ def _build_address_snapshot(address) -> dict:
 
 
 def _validate_branch(branch):
+    if branch is None:
+        raise EmptyCartError()  # yoki alohida CheckoutError("Savat filialga bog'lanmagan")
     if not branch.is_open or not branch.accepting_orders:
         raise BranchClosedError()
 
