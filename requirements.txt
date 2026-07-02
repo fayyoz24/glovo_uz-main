@@ -1,0 +1,42 @@
+# Core
+Django
+djangorestframework
+djangorestframework-simplejwt
+
+# Database
+psycopg2-binary
+
+# Cache / broker
+redis
+celery
+celery[redis]
+django-celery-beat
+
+# Realtime
+channels
+channels-redis
+
+# Storage
+boto3
+django-storages
+
+# HTTP clients
+requests
+httpx
+
+# Telegram bot
+aiogram==3.13.1
+
+# Utils
+Pillow
+python-decouple
+phonenumbers
+django-cors-headers
+
+# Monitoring
+sentry-sdk[django]
+
+# Testing
+pytest
+pytest-django
+factory-boy

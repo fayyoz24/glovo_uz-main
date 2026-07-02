@@ -1,0 +1,41 @@
+# =========================================================
+# Glovo UZ Backend — Dockerfile.dev
+# Local development image: runserver/Channels dev server, no gunicorn,
+# bind-mounts source so code changes apply without rebuilding.
+# =========================================================
+
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.local \
+    APP_HOME=/app
+
+WORKDIR ${APP_HOME}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libwebp-dev \
+    netcat-openbsd \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/local.txt
+
+COPY docker/scripts/entrypoint.sh /entrypoint.sh
+COPY docker/scripts/wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /entrypoint.sh /wait-for-it.sh
+
+# Source is bind-mounted in docker-compose.yml; COPY here only as a fallback
+# so the image is still runnable standalone (e.g. in CI) without the mount.
+COPY . .
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

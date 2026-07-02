@@ -1,0 +1,91 @@
+# =========================================================
+# Glovo UZ — docker-compose.dev.yml (local development)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Overrides production compose with:
+#   - Dockerfile.dev (runserver, no gunicorn)
+#   - bind-mounted source for hot reload
+#   - exposed ports straight to host (no nginx required while developing)
+#   - DEBUG-friendly env defaults
+# =========================================================
+
+services:
+
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-glovo_uz_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-glovo_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+
+  redis:
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
+  backend-api:
+    build:
+      context: ..
+      dockerfile: docker/django/Dockerfile.dev
+    environment:
+      SERVICE_ROLE: api
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_DEBUG: "True"
+    command: >
+      python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ../:/app
+    ports:
+      - "8000:8000"
+    healthcheck:
+      disable: true
+
+  channels-worker:
+    build:
+      context: ..
+      dockerfile: docker/django/Dockerfile.dev
+    environment:
+      SERVICE_ROLE: channels
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    command: >
+      python manage.py runserver 0.0.0.0:8001
+    volumes:
+      - ../:/app
+    ports:
+      - "8001:8001"
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/django/Dockerfile.dev
+    environment:
+      SERVICE_ROLE: worker
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    command: >
+      celery -A config worker --loglevel=debug --concurrency=2
+    volumes:
+      - ../:/app
+    healthcheck:
+      disable: true
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/django/Dockerfile.dev
+    environment:
+      SERVICE_ROLE: beat
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    command: >
+      celery -A config beat --loglevel=debug --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ../:/app
+
+  # Nginx is not needed for local dev (ports exposed directly above);
+  # the service is disabled by scaling it to zero.
+  nginx:
+    profiles: ["disabled"]
