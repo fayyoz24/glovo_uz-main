@@ -243,7 +243,7 @@ class PlayMobileSMSProvider(BaseProvider):
     def __init__(self) -> None:
         self.username = getattr(settings, "PLAYMOBILE_USERNAME", None)
         self.password = getattr(settings, "PLAYMOBILE_PASSWORD", None)
-        self.originator = getattr(settings, "PLAYMOBILE_ORIGINATOR", "GlovoUZ")
+        self.originator = getattr(settings, "PLAYMOBILE_ORIGINATOR", "Dasturxon")
         if not self.username or not self.password:
             raise ChannelNotConfiguredError(
                 "PLAYMOBILE_USERNAME or PLAYMOBILE_PASSWORD not configured.", channel="sms"

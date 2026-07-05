@@ -71,7 +71,7 @@ TELEGRAM_ADMIN_CHAT_ID = env("TELEGRAM_ADMIN_CHAT_ID")
 
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-DEFAULT_FROM_EMAIL = "noreply@glovo.uz"
+DEFAULT_FROM_EMAIL = "noreply@dasturxon.uz"
 ```
 
 ---
@@ -232,7 +232,7 @@ send_otp_sms.delay(phone="+998901234567", code="123456", lang="uz")
 ## 8. WebSocket Client (JavaScript)
 
 ```javascript
-const ws = new WebSocket(`wss://api.glovo.uz/ws/notifications/?token=${jwtToken}`);
+const ws = new WebSocket(`wss://api.dasturxon.uz/ws/notifications/?token=${jwtToken}`);
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);

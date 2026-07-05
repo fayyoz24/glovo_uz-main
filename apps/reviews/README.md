@@ -1,6 +1,6 @@
 # reviews app
 
-Glovo UZ platformasidagi mijoz reytinglari va sharhlar tizimi.
+Dasturxon platformasidagi mijoz reytinglari va sharhlar tizimi.
 
 ## Fayl tuzilmasi
 

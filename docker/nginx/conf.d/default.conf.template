@@ -1,5 +1,5 @@
 # =========================================================
-# Glovo UZ — reverse proxy server block
+# Dasturxon — reverse proxy server block
 #
 # Routes:
 #   /ws/*               -> channels-worker (ASGI, websocket upgrade)

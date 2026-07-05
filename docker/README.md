@@ -1,7 +1,7 @@
 # docker/
 
-Glovo UZ backendining konteynerizatsiya qatlami. Loyihaning qolgan qismi
-(`config/`, `apps/`, `shared/`, `requirements/`, `manage.py`) allaqachon
+Dasturxon backendining konteynerizatsiya qatlami. Loyihaning qolgan qismi
+(`config/`, `apps/`, `requirements.txt`, `manage.py`) allaqachon
 mavjud bo'lib, quyidagi fayllar shularni import qilib ishlatadi.
 
 ## Tarkib
@@ -70,8 +70,9 @@ ichida `envsubst` orqali avtomatik almashtiradi (nginx rasmiy image'ining
 - `SERVICE_ROLE` env o'zgaruvchisi `entrypoint.sh` ichida qaysi servis
   ekanini aniqlaydi (`api`, `worker`, `beat`, `channels`) — shunga qarab
   migration/collectstatic bosqichlari faqat `api` uchun ishlaydi.
-- `requirements/prod.txt`, `requirements/local.txt` allaqachon mavjud
-  bo'lishi kutiladi (`requirements/` papkasi loyihada bor — Section 9).
+- Yagona `requirements.txt` fayl ishlatiladi (build-time `REQUIREMENTS_FILE`
+  argumenti shu faylga ishora qiladi — hozircha alohida local/prod fayllarga
+  bo'linmagan).
 - Postgres va Redis healthcheck'lari orqali boshqa servislar ular
   tayyor bo'lgandan keyin ishga tushadi (`depends_on: condition: service_healthy`).
 - CI/CD (Section 27): GitHub Actions shu `docker/django/Dockerfile`ni

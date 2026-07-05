@@ -1,6 +1,6 @@
 # promotions app
 
-Glovo UZ platformasidagi promo kampaniyalar va referal tizimi.
+Dasturxon platformasidagi promo kampaniyalar va referal tizimi.
 
 ## Fayl tuzilmasi
 

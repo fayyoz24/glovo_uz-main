@@ -1,5 +1,5 @@
 # =========================================================
-# Glovo UZ Backend — Django/DRF Dockerfile
+# Dasturxon Backend — Django/DRF Dockerfile
 # Multi-stage build: builder (compiles deps) -> runtime (slim, no build tools)
 # =========================================================
 
@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Build dependency (env passed at build time: local | dev | staging | prod)
-ARG REQUIREMENTS_FILE=requirements/prod.txt
-COPY requirements/ requirements/
+# Build dependency (single flat requirements file — see requirements.txt)
+ARG REQUIREMENTS_FILE=requirements.txt
+COPY requirements.txt ${REQUIREMENTS_FILE}
 RUN pip wheel --wheel-dir /wheels -r ${REQUIREMENTS_FILE}
 
 # ---------- Stage 2: runtime ----------
@@ -35,7 +35,7 @@ FROM python:${PYTHON_VERSION} AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=config.settings.prod \
+    DJANGO_SETTINGS_MODULE=config.settings \
     APP_HOME=/app
 
 # Runtime system deps only (no compilers)
@@ -52,9 +52,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR ${APP_HOME}
 
 # Install prebuilt wheels from the builder stage (fast, no compiling at runtime)
-ARG REQUIREMENTS_FILE=requirements/prod.txt
+ARG REQUIREMENTS_FILE=requirements.txt
 COPY --from=builder /wheels /wheels
-COPY requirements/ requirements/
+COPY requirements.txt ${REQUIREMENTS_FILE}
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r ${REQUIREMENTS_FILE} \
     && rm -rf /wheels
 

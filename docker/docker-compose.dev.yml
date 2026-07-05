@@ -1,5 +1,5 @@
 # =========================================================
-# Glovo UZ — docker-compose.dev.yml (local development)
+# Dasturxon — docker-compose.dev.yml (local development)
 #
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -17,8 +17,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-glovo_uz_dev}
-      POSTGRES_USER: ${POSTGRES_USER:-glovo_user}
+      POSTGRES_DB: ${POSTGRES_DB:-dasturxon_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-dasturxon_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
 
   redis:
@@ -34,7 +34,7 @@ services:
       dockerfile: docker/django/Dockerfile.dev
     environment:
       SERVICE_ROLE: api
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings
       DJANGO_DEBUG: "True"
     command: >
       python manage.py runserver 0.0.0.0:8000
@@ -51,7 +51,7 @@ services:
       dockerfile: docker/django/Dockerfile.dev
     environment:
       SERVICE_ROLE: channels
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings
     command: >
       python manage.py runserver 0.0.0.0:8001
     volumes:
@@ -65,7 +65,7 @@ services:
       dockerfile: docker/django/Dockerfile.dev
     environment:
       SERVICE_ROLE: worker
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings
     command: >
       celery -A config worker --loglevel=debug --concurrency=2
     volumes:
@@ -79,7 +79,7 @@ services:
       dockerfile: docker/django/Dockerfile.dev
     environment:
       SERVICE_ROLE: beat
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings
     command: >
       celery -A config beat --loglevel=debug --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:

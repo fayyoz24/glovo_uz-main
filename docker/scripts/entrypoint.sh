@@ -30,7 +30,9 @@ run_migrations() {
 }
 
 collect_static() {
-    if [ "${DJANGO_SETTINGS_MODULE}" != "config.settings.local" ]; then
+    # Skip collectstatic in local/dev (DJANGO_DEBUG=True); only run it for
+    # staging/prod-style deployments where DEBUG is off.
+    if [ "${DJANGO_DEBUG:-True}" != "True" ]; then
         echo ">>> [entrypoint] collecting static files..."
         python manage.py collectstatic --noinput --clear
     fi

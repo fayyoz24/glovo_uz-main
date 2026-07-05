@@ -1,5 +1,5 @@
 -- =========================================================
--- Glovo UZ — Postgres bootstrap
+-- Dasturxon — Postgres bootstrap
 -- Runs once, automatically, on first container start (empty data volume),
 -- via the official postgres image's /docker-entrypoint-initdb.d mechanism.
 -- =========================================================

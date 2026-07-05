@@ -1,5 +1,5 @@
 # =========================================================
-# Glovo UZ Backend — Dockerfile.dev
+# Dasturxon Backend — Dockerfile.dev
 # Local development image: runserver/Channels dev server, no gunicorn,
 # bind-mounts source so code changes apply without rebuilding.
 # =========================================================
@@ -8,7 +8,7 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=config.settings.local \
+    DJANGO_SETTINGS_MODULE=config.settings \
     APP_HOME=/app
 
 WORKDIR ${APP_HOME}
@@ -24,8 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/ requirements/
-RUN pip install --no-cache-dir -r requirements/local.txt
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY docker/scripts/entrypoint.sh /entrypoint.sh
 COPY docker/scripts/wait-for-it.sh /wait-for-it.sh

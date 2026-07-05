@@ -5,7 +5,7 @@ Barcha bot handler'lari shu yerda.
 
 Foydalanuvchi oqimi (42.uz uslubida — yagona auth usuli):
   1. Foydalanuvchi saytda "Kodni kiriting" oynasini ko'radi:
-        "@GlovoUZBot botiga kiring va 1 daqiqalik kodingizni oling."
+        "@DasturxonBot botiga kiring va 1 daqiqalik kodingizni oling."
   2. Foydalanuvchi botga o'tadi va /start yuboradi (yoki "🔄 Yangi kod" tugmasini bosadi).
   3. Bot Django backend'dan yangi bir martalik kod so'raydi va uni foydalanuvchiga yuboradi.
   4. Foydalanuvchi shu kodni saytga kiritadi — sayt backend orqali kodni tasdiqlaydi
@@ -67,7 +67,7 @@ async def _send_login_code(message: Message) -> None:
         f"🔑 Sizning kodingiz:\n\n"
         f"<code>{code}</code>\n\n"
         f"⏱ Kod {expires_in} soniya amal qiladi.\n"
-        f"Ushbu kodni Glovo UZ saytidagi \"Kodni kiriting\" oynasiga kiriting.",
+        f"Ushbu kodni Dasturxon saytidagi \"Kodni kiriting\" oynasiga kiriting.",
         reply_markup=KEYBOARD,
     )
     logger.info("Login code sent: user_id=%s username=%s", user.id, user.username)
@@ -80,7 +80,7 @@ async def _send_login_code(message: Message) -> None:
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
     await message.answer(
-        "👋 <b>Glovo UZ</b> botiga xush kelibsiz!\n\n"
+        "👋 <b>Dasturxon</b> botiga xush kelibsiz!\n\n"
         "Saytga kirish uchun quyidagi bir martalik kodingizdan foydalaning 👇",
         reply_markup=KEYBOARD,
     )
@@ -105,12 +105,12 @@ async def cmd_new_code(message: Message) -> None:
 async def cmd_help(message: Message) -> None:
     await message.answer(
         "ℹ️ <b>Yordam</b>\n\n"
-        "Glovo UZ saytiga kirish uchun:\n"
+        "Dasturxon saytiga kirish uchun:\n"
         "1. Saytda \"Kodni kiriting\" oynasini oching\n"
         "2. Shu botga /start yuboring (yoki 🔄 Yangi kod olish tugmasini bosing)\n"
         "3. Botdan kelgan kodni saytga kiriting\n\n"
         "Kod atigi 1 daqiqa amal qiladi — muddati o'tsa, yangisini so'rang.\n\n"
-        "Muammo bo'lsa: <a href='https://glovo.uz/support'>Qo'llab-quvvatlash</a>",
+        "Muammo bo'lsa: <a href='https://dasturxon.uz/support'>Qo'llab-quvvatlash</a>",
         parse_mode="HTML",
         disable_web_page_preview=True,
         reply_markup=KEYBOARD,
@@ -124,7 +124,7 @@ async def cmd_help(message: Message) -> None:
 @router.message()
 async def fallback(message: Message) -> None:
     await message.answer(
-        "Bu bot faqat Glovo UZ saytiga kirish uchun bir martalik kod beradi.\n"
+        "Bu bot faqat Dasturxon saytiga kirish uchun bir martalik kod beradi.\n"
         "Yangi kod olish uchun /start yuboring yoki quyidagi tugmani bosing.",
         reply_markup=KEYBOARD,
     )
