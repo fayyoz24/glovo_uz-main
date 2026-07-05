@@ -52,6 +52,9 @@ def add_item_to_cart(
         is_open=True, accepting_orders=True
     ).first()
 
+    if not branch:
+        raise BranchMismatch(detail="Bu mahsulot uchun ochiq filial topilmadi.")
+
     with transaction.atomic():
         cart = get_or_create_active_cart(user, branch_id=branch.id if branch else None)
 
@@ -59,8 +62,9 @@ def add_item_to_cart(
             raise CartExpired()
 
         # Branch consistency check
-        if cart.branch_id and branch and str(cart.branch_id) != str(branch.id):
-            raise BranchMismatch()
+        if not cart.branch_id and branch:
+            cart.branch = branch
+            cart.save(update_fields=["branch", "updated_at"])
 
         # Resolve variant
         unit_price = product.base_price

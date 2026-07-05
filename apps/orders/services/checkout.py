@@ -31,9 +31,13 @@ def _build_address_snapshot(address) -> dict:
 
 def _validate_branch(branch):
     if branch is None:
-        raise EmptyCartError()  # yoki alohida CheckoutError("Savat filialga bog'lanmagan")
+        raise BranchClosedError(
+            detail="Savat hech qanday filialga bog'lanmagan. Iltimos, savatni tozalab qaytadan mahsulot qo'shing."
+        )
     if not branch.is_open or not branch.accepting_orders:
-        raise BranchClosedError()
+        raise BranchClosedError(
+            detail="Filial hozirda ishlamaydi. Iltimos, keyinroq urinib ko'ring."
+        )
 
 
 def _create_order_items_from_cart(order: Order, cart: Cart):
