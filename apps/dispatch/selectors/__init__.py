@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.db.models import QuerySet
 
 from apps.dispatch.models import CourierAssignment
-from apps.dispatch.constants import AssignmentStatus, MAX_PING_AGE_MINUTES
+from apps.dispatch.constants import AssignmentStatus, MAX_PING_AGE_MINUTES, DEFAULT_SEARCH_RADIUS_KM
 from apps.couriers.models import CourierProfile
 from apps.couriers.constants import CourierStatus
 
@@ -20,7 +20,7 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * c
 
 
-def get_scored_couriers(branch, radius_km: float = 3.0) -> list[dict]:
+def get_scored_couriers(branch, radius_km: float = DEFAULT_SEARCH_RADIUS_KM) -> list[dict]:
     """
     Filialga yaqin va tayinlash uchun mos kuryerlarni
     hisob (score) bo'yicha saralangan ro'yxat sifatida qaytaradi.

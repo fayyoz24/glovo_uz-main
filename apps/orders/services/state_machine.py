@@ -49,6 +49,17 @@ def transition_order_status(
         note=note,
     )
 
+    # Buyurtma yetkazib beruvchi uchun tayyor bo'lganda kuryer qidirishni boshlaymiz.
+    # Buni shu yerga (state machine'ning o'ziga) ulash muhim, chunki order har qanday
+    # yo'l bilan (merchant paneli, admin, avtomatik) READY_FOR_PICKUP holatiga
+    # o'tishi mumkin — barcha holatlarda dispatch ishga tushishi kerak.
+    if to_status == OrderStatus.READY_FOR_PICKUP:
+        try:
+            from apps.dispatch.tasks import trigger_dispatch_for_order
+            trigger_dispatch_for_order.delay(str(order.id))
+        except ImportError:
+            pass
+
     # Async bildirishnomalar
     try:
         from apps.orders.tasks import notify_order_status_changed

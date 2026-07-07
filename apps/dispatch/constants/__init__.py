@@ -17,7 +17,7 @@ OFFER_TIMEOUT_SECONDS = 30
 MAX_ASSIGNMENT_ATTEMPTS = 5
 
 # Radiusi (km) — filialdan kuryerlarga
-DEFAULT_SEARCH_RADIUS_KM = 3.0
+DEFAULT_SEARCH_RADIUS_KM = 10.0
 
 # Oxirgi ping qanchalik yangi bo'lishi kerak (daqiqa)
 MAX_PING_AGE_MINUTES = 5

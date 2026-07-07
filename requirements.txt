@@ -15,6 +15,7 @@ django-celery-beat
 # Realtime
 channels
 channels-redis
+daphne
 
 # Storage
 boto3

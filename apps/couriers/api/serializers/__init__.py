@@ -27,8 +27,13 @@ class CourierProfileUpdateSerializer(serializers.ModelSerializer):
 
 
 class LocationPingSerializer(serializers.Serializer):
-    latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
-    longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+    # FloatField ishlatiladi, chunki brauzer Geolocation API'si odatda
+    # 7 tadan ko'p o'nlik xonali son qaytaradi (masalan 41.31108123456789);
+    # qat'iy DecimalField(decimal_places=7) bunday qiymatlarni "400 Bad
+    # Request" bilan rad etib yuborardi. Aniqlik saqlashga (~1cm) yetadi,
+    # yaxlitlash record_location_ping xizmatida amalga oshiriladi.
+    latitude = serializers.FloatField(min_value=-90, max_value=90)
+    longitude = serializers.FloatField(min_value=-180, max_value=180)
     accuracy = serializers.FloatField(required=False, allow_null=True)
 
 
