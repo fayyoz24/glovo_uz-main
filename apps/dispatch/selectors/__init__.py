@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.db.models import QuerySet
 
 from apps.dispatch.models import CourierAssignment
-from apps.dispatch.constants import AssignmentStatus, MAX_PING_AGE_MINUTES, DEFAULT_SEARCH_RADIUS_KM
+from apps.dispatch.constants import AssignmentStatus, MAX_PING_AGE_MINUTES, MAX_SEARCH_RADIUS_KM
 from apps.couriers.models import CourierProfile
 from apps.couriers.constants import CourierStatus
 
@@ -20,23 +20,23 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * c
 
 
-def get_scored_couriers(branch, radius_km: float = DEFAULT_SEARCH_RADIUS_KM) -> list[dict]:
+def get_nearest_couriers(branch, exclude_courier_ids=None, radius_km: float = MAX_SEARCH_RADIUS_KM) -> list[dict]:
     """
-    Filialga yaqin va tayinlash uchun mos kuryerlarni
-    hisob (score) bo'yicha saralangan ro'yxat sifatida qaytaradi.
+    Filial atrofidagi mavjud kuryerlarni ENG YAQINIDAN boshlab
+    (sof masofa bo'yicha, radius/reyting bilan cheklamasdan) qaytaradi.
 
-    Score formulasi:
-        score = (1 / distance_km) * 0.5
-              + rating_normalized * 0.3
-              + idle_bonus * 0.2
-
-    Kichikroq distance → yuqori score.
+    Bu Uber/Bolt/Glovo mantig'i: doim eng yaqin bo'sh kuryerga
+    birinchi bo'lib taklif boradi. `radius_km` faqat mutlaqo
+    mantiqsiz (masalan, boshqa shahar/viloyatdagi) kuryerlarni
+    chetlab o'tish uchun xavfsizlik cheki bo'lib xizmat qiladi.
     """
     from datetime import timedelta
     from apps.couriers.models import CourierLocationPing
 
     if not branch.latitude or not branch.longitude:
         return []
+
+    exclude_courier_ids = exclude_courier_ids or set()
 
     branch_lat = float(branch.latitude)
     branch_lng = float(branch.longitude)
@@ -49,7 +49,7 @@ def get_scored_couriers(branch, radius_km: float = DEFAULT_SEARCH_RADIUS_KM) -> 
         .distinct()
     )
 
-    # Faol va mavjud kuryerlar
+    # Faol, tasdiqlangan va band bo'lmagan kuryerlar
     profiles = (
         CourierProfile.objects
         .filter(
@@ -59,10 +59,11 @@ def get_scored_couriers(branch, radius_km: float = DEFAULT_SEARCH_RADIUS_KM) -> 
             current_lat__isnull=False,
             current_lng__isnull=False,
         )
+        .exclude(user_id__in=exclude_courier_ids)
         .select_related("user")
     )
 
-    scored = []
+    nearest = []
     for profile in profiles:
         dist = _haversine_km(
             branch_lat, branch_lng,
@@ -72,24 +73,21 @@ def get_scored_couriers(branch, radius_km: float = DEFAULT_SEARCH_RADIUS_KM) -> 
         if dist > radius_km:
             continue
 
-        # Masofaga asosiy hissa (yaqin = yaxshi)
-        distance_score = 1.0 / max(dist, 0.1)
-        # Rating (5 dan normallashtirish)
-        rating_score = float(profile.rating) / 5.0
-        # Idle bonus — ko'p yetkazib bergan kuryer kamroq priority
-        idle_score = 1.0 / max(profile.total_deliveries, 1)
-
-        total_score = distance_score * 0.5 + rating_score * 0.3 + idle_score * 0.2
-
-        scored.append({
+        nearest.append({
             "courier_user": profile.user,
             "profile": profile,
             "distance_km": round(dist, 2),
-            "score": round(total_score, 4),
         })
 
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    return scored
+    # Faqat masofa bo'yicha — eng yaqini birinchi
+    nearest.sort(key=lambda x: x["distance_km"])
+    return nearest
+
+
+def get_nearest_available_courier(branch, exclude_courier_ids=None) -> dict | None:
+    """Eng yaqin bitta bo'sh kuryerni qaytaradi (topilmasa None)."""
+    nearest = get_nearest_couriers(branch, exclude_courier_ids=exclude_courier_ids)
+    return nearest[0] if nearest else None
 
 
 def get_active_assignment(order) -> CourierAssignment | None:

@@ -73,6 +73,46 @@ def trigger_dispatch_for_order(self, order_id: str):
         raise self.retry(exc=exc, countdown=10)
 
 
+@shared_task(bind=True, max_retries=1)
+def retry_pending_dispatch(self, order_id: str):
+    """
+    Buyurtma "pending" (kuryer kutish) holatida PENDING_RETRY_SECONDS
+    (5 daqiqa) turgandan so'ng chaqiriladi — navbatdagi eng yaqin,
+    avval taklif qilinmagan kuryerga qayta taklif yuboradi.
+    """
+    try:
+        from apps.orders.models import Order
+        from apps.orders.constants import OrderStatus
+        from apps.dispatch.services import assign_courier_to_order, reassign_or_escalate
+        from apps.dispatch.selectors import get_active_assignment
+        from apps.dispatch.exceptions import NoCouriersAvailable, MaxAttemptsReached
+
+        try:
+            order = Order.objects.select_related("branch").get(id=order_id)
+        except Order.DoesNotExist:
+            return
+
+        # Buyurtma allaqachon kuryerga biriktirilgan yoki bekor qilingan bo'lsa — hech nima qilmaymiz
+        if order.status != OrderStatus.READY_FOR_PICKUP:
+            return
+
+        # Aktiv (hali javob kutilayotgan) taklif bo'lsa ham — qayta urinmaymiz
+        if get_active_assignment(order):
+            return
+
+        try:
+            assignment = assign_courier_to_order(order)
+            print(f"[DISPATCH] Pending retry → Order {order.public_id} → Courier {assignment.courier}")
+        except NoCouriersAvailable:
+            print(f"[DISPATCH] Pending retry: hali kuryer yo'q, order {order.public_id} kutishda qoladi.")
+            reassign_or_escalate(order)
+        except MaxAttemptsReached:
+            reassign_or_escalate(order)
+
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=10)
+
+
 @shared_task(bind=True, max_retries=3, default_retry_delay=30)
 def notify_admin_no_courier(self, order_id: str):
     """Admin/ops qatoriga buyurtmani yuboradi."""

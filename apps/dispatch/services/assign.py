@@ -1,5 +1,16 @@
 """
 Kuryer tayinlash xizmati — asosiy dispatch algoritmi.
+
+Mantiq (Uber / Bolt / Glovo uslubida):
+1. Har doim ENG YAQIN bo'sh kuryerga (bittasiga) taklif yuboriladi —
+   radius bo'yicha kuryerlar ro'yxatidan tanlash emas.
+2. Kuryerga OFFER_TIMEOUT_SECONDS (10s) davomida signal/notification boradi.
+3. Agar kuryer shu vaqt ichida rad etsa yoki javob bermasa (timeout),
+   buyurtma "pending" — ya'ni kuryer kutish holatida qoladi.
+4. PENDING_RETRY_SECONDS (5 daqiqa)dan so'ng navbatdagi eng yaqin
+   (avval taklif qilinmagan) kuryerga qayta taklif yuboriladi.
+5. MAX_ASSIGNMENT_ATTEMPTS marta urinishdan keyin admin/ops qatoriga
+   eskalatsiya qilinadi.
 """
 from django.db import transaction
 from django.utils import timezone
@@ -9,23 +20,23 @@ from apps.dispatch.models import CourierAssignment
 from apps.dispatch.constants import (
     AssignmentStatus,
     OFFER_TIMEOUT_SECONDS,
+    PENDING_RETRY_SECONDS,
     MAX_ASSIGNMENT_ATTEMPTS,
 )
-from apps.dispatch.selectors import get_scored_couriers, count_assignment_attempts
+from apps.dispatch.selectors import get_nearest_available_courier, count_assignment_attempts
 from apps.dispatch.exceptions import NoCouriersAvailable, MaxAttemptsReached
 
 
 @transaction.atomic
 def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignment:
     """
-    Buyurtma uchun eng mos kuryerni topadi va taklif yaratadi.
+    Buyurtma uchun ENG YAQIN bo'sh kuryerni topadi va unga taklif yaratadi.
 
-    Algoritm:
-    1. Filial atrofidagi onlayn kuryerlarni score bo'yicha tartiblaydi
-    2. Avval rad etgan yoki allaqachon taklif qilingan kuryerlarni o'tkazib yuboradi
-    3. Yangi CourierAssignment (status=OFFERED) yaratadi
-    4. Kuryerga WebSocket orqali buyurtma taklifini yuboradi
-    5. Celery task bilan timeout countdown ni ishga tushiradi
+    1. Filialga eng yaqin onlayn kuryerni tanlaydi (avval taklif qilingan/
+       rad etgan kuryerlarni chetlab o'tib)
+    2. Yangi CourierAssignment (status=OFFERED) yaratadi
+    3. Kuryerga WebSocket orqali buyurtma taklifini (notification signal) yuboradi
+    4. Celery task bilan OFFER_TIMEOUT_SECONDS (10s) countdown ni ishga tushiradi
     """
     branch = order.branch
 
@@ -37,7 +48,7 @@ def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignm
             f"Order {order.public_id} uchun {MAX_ASSIGNMENT_ATTEMPTS} ta urinishdan keyin kuryer topilmadi."
         )
 
-    # Bu order uchun ilgari rad etgan yoki vaqt tugagan kuryerlar
+    # Bu order uchun ilgari taklif qilingan (rad etgan yoki vaqt tugagan) kuryerlar
     excluded_courier_ids = set(
         CourierAssignment.objects.filter(
             order=order,
@@ -45,19 +56,13 @@ def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignm
         ).values_list("courier_id", flat=True)
     )
 
-    scored = get_scored_couriers(branch)
-    chosen = None
-    chosen_distance = None
+    nearest = get_nearest_available_courier(branch, exclude_courier_ids=excluded_courier_ids)
 
-    for entry in scored:
-        if entry["courier_user"].id in excluded_courier_ids:
-            continue
-        chosen = entry["courier_user"]
-        chosen_distance = entry["distance_km"]
-        break
-
-    if chosen is None:
+    if nearest is None:
         raise NoCouriersAvailable()
+
+    chosen = nearest["courier_user"]
+    chosen_distance = nearest["distance_km"]
 
     offer_expires = timezone.now() + timedelta(seconds=OFFER_TIMEOUT_SECONDS)
 
@@ -70,19 +75,19 @@ def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignm
         distance_km=chosen_distance,
     )
 
-    # Kuryerga WebSocket taklifini yuborish
+    # Kuryerga WebSocket orqali notification signal yuborish
     try:
         from apps.dispatch.services.realtime import send_order_offer_to_courier
         send_order_offer_to_courier(assignment=assignment)
     except Exception:
         pass
 
-    # Timeout task ni ishga tushirish
+    # 10 soniyalik timeout task ni ishga tushirish
     try:
         from apps.dispatch.tasks import handle_offer_timeout
         handle_offer_timeout.apply_async(
             args=[str(assignment.id)],
-            countdown=OFFER_TIMEOUT_SECONDS + 2,
+            countdown=OFFER_TIMEOUT_SECONDS + 1,
         )
     except Exception:
         pass
@@ -90,25 +95,35 @@ def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignm
     return assignment
 
 
-def reassign_or_escalate(order) -> CourierAssignment | None:
+def reassign_or_escalate(order) -> None:
     """
-    Tayinlash muvaffaqiyatsiz bo'lganda (rad etish / timeout):
-    - Yangi kuryer qidiradi
-    - Limit to'lsa admin qatoriga yuboradi
+    Taklif muvaffaqiyatsiz bo'lganda (rad etish / 10s timeout) chaqiriladi.
+
+    Darhol keyingi kuryerga o'tmaydi — buning o'rniga buyurtmani
+    "pending" (kuryer kutilmoqda) holatida qoldirib, PENDING_RETRY_SECONDS
+    (5 daqiqa)dan keyin qayta urinish uchun Celery task rejalashtiradi.
+    Urinishlar soni limitiga yetsa — admin/ops qatoriga eskalatsiya qiladi.
     """
     attempts = count_assignment_attempts(order)
     if attempts >= MAX_ASSIGNMENT_ATTEMPTS:
         _escalate_to_admin(order)
-        return None
+        return
+
+    # Oldindan yaqin atrofda hech kim topilmasa ham darhol tekshirib ko'ramiz —
+    # topilmasa ham xafa bo'lmaymiz, baribir 5 daqiqadan keyin qayta uriniladi.
+    print(
+        f"[DISPATCH] PENDING: Order {order.public_id} kuryer kutmoqda, "
+        f"{PENDING_RETRY_SECONDS}s dan keyin qayta taklif qilinadi."
+    )
 
     try:
-        return assign_courier_to_order(order, attempt_number=attempts + 1)
-    except NoCouriersAvailable:
-        _escalate_to_admin(order)
-        return None
-    except MaxAttemptsReached:
-        _escalate_to_admin(order)
-        return None
+        from apps.dispatch.tasks import retry_pending_dispatch
+        retry_pending_dispatch.apply_async(
+            args=[str(order.id)],
+            countdown=PENDING_RETRY_SECONDS,
+        )
+    except Exception as e:
+        print(f"[DISPATCH] retry scheduling error: {e}")
 
 
 def _escalate_to_admin(order):

@@ -3,6 +3,8 @@ Django Channels orqali real-time WebSocket xabarlari.
 """
 import json
 
+from apps.dispatch.constants import OFFER_TIMEOUT_SECONDS
+
 
 def send_order_offer_to_courier(assignment):
     """
@@ -31,7 +33,7 @@ def send_order_offer_to_courier(assignment):
                 "distance_km": assignment.distance_km,
                 "payment_method": order.payment_method,
             },
-            "expires_in_seconds": 30,
+            "expires_in_seconds": OFFER_TIMEOUT_SECONDS,
         }
 
         async_to_sync(channel_layer.group_send)(group_name, payload)
