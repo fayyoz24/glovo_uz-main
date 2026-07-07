@@ -35,6 +35,8 @@ class CartSerializer(serializers.ModelSerializer):
     branch_name = serializers.CharField(source="branch.name", read_only=True)
     merchant_name = serializers.CharField(source="branch.merchant.name", read_only=True)
     item_count = serializers.SerializerMethodField()
+    subtotal = serializers.SerializerMethodField()
+    total = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
@@ -47,6 +49,16 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_item_count(self, obj):
         return obj.items.count()
+
+    def get_subtotal(self, obj):
+        # Har doim items'dan jonli hisoblanadi — keshlangan cart.subtotal
+        # maydoniga tayanmaymiz, chunki ba'zi holatlarda (masalan recalculate()
+        # chaqirilmagan holatlar) u eskirib, items bilan mos kelmasligi mumkin.
+        return sum(item.line_total for item in obj.items.all())
+
+    def get_total(self, obj):
+        subtotal = self.get_subtotal(obj)
+        return subtotal + obj.delivery_fee + obj.service_fee - obj.discount_amount
 
 
 class AddToCartSerializer(serializers.Serializer):

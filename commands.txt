@@ -1,0 +1,4 @@
+python -m telegram_bot.main # botni ishga tushirish
+celery -A config worker -l info --pool=solo # celery
+docker start redis # docker
+python manage.py runserver # serverni ishga tushirish
