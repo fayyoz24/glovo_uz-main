@@ -12,6 +12,7 @@ from apps.orders.selectors import (
 from apps.orders.services import checkout_from_cart, transition_order_status, cancel_order
 from apps.orders.constants import OrderStatus, CancelReason
 from apps.orders.exceptions import OrderNotFound, OrderNotCancellable, InvalidOrderTransition
+from apps.orders.permissions import IsMerchantStaff
 from apps.orders.api.serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
@@ -142,10 +143,12 @@ class OrderTrackView(views.APIView):
 class MerchantOrderListView(generics.ListAPIView):
     """GET /api/v1/merchant/orders/"""
     serializer_class = OrderListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsMerchantStaff]
 
     def get_queryset(self):
         branch = self.request.user.merchant_staff_profile.branch
+        if branch is None:
+            return Order.objects.none()
         return get_branch_orders(
             branch=branch,
             status=self.request.query_params.get("status"),
@@ -154,11 +157,13 @@ class MerchantOrderListView(generics.ListAPIView):
 
 class _MerchantOrderTransitionView(views.APIView):
     """Merchant tomonidan buyurtma holati o'zgartirish (asosiy sinf)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsMerchantStaff]
     target_status = None
 
     def post(self, request, pk):
         branch = request.user.merchant_staff_profile.branch
+        if branch is None:
+            raise OrderNotFound()
         try:
             order = get_order_for_merchant(pk, branch)
         except Order.DoesNotExist:
@@ -187,10 +192,12 @@ class MerchantConfirmOrderView(_MerchantOrderTransitionView):
 
 class MerchantRejectOrderView(views.APIView):
     """POST /api/v1/merchant/orders/{id}/reject/"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsMerchantStaff]
 
     def post(self, request, pk):
         branch = request.user.merchant_staff_profile.branch
+        if branch is None:
+            raise OrderNotFound()
         try:
             order = get_order_for_merchant(pk, branch)
         except Order.DoesNotExist:

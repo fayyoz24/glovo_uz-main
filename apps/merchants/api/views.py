@@ -8,6 +8,7 @@ from apps.merchants.api.serializers import (
     MerchantDetailSerializer,
     MerchantCreateSerializer,
     MerchantBranchSerializer,
+    MerchantStaffProfileSerializer,
 )
 from apps.merchants.selectors import (
     get_active_merchants,
@@ -26,6 +27,7 @@ from apps.merchants.services import (
 from apps.merchants.exceptions import MerchantNotFound, BranchNotFound
 from apps.common.pagination import StandardPagination
 from apps.accounts.permissions import IsAdminOrSupport
+from apps.merchants.permissions import IsMerchantStaff
 
 
 class MerchantListView(APIView):
@@ -102,4 +104,36 @@ class BranchToggleOrdersView(APIView):
             raise MerchantNotFound()
         accepting = request.data.get("accepting_orders", True)
         branch = toggle_accepting_orders(branch_pk, merchant, accepting)
+        return Response(MerchantBranchSerializer(branch).data)
+
+
+class MerchantStaffProfileView(APIView):
+    """
+    GET  /api/v1/merchant/profile/ — joriy merchant xodimining o'z profili
+         (do'kon nomi, biriktirilgan filial va uning holati).
+    """
+    permission_classes = [IsAuthenticated, IsMerchantStaff]
+
+    def get(self, request):
+        profile = request.user.merchant_staff_profile
+        return Response(MerchantStaffProfileSerializer(profile).data)
+
+
+class MerchantStaffToggleAcceptingOrdersView(APIView):
+    """
+    POST /api/v1/merchant/branch/toggle-orders/
+    { "accepting_orders": true|false }
+
+    Merchant panelidan xodimning o'z filiali uchun buyurtma qabul qilish/
+    qilmaslikni almashtiradi (o'z merchant/filialiga cheklangan — merchant_pk
+    talab qilinmaydi, chunki joriy foydalanuvchining biriktirilgan filiali olinadi).
+    """
+    permission_classes = [IsAuthenticated, IsMerchantStaff]
+
+    def post(self, request):
+        profile = request.user.merchant_staff_profile
+        if profile.branch is None:
+            return Response({"detail": "Sizga hech qanday filial biriktirilmagan."}, status=400)
+        accepting = request.data.get("accepting_orders", True)
+        branch = toggle_accepting_orders(profile.branch_id, profile.merchant, accepting)
         return Response(MerchantBranchSerializer(branch).data)

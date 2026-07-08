@@ -6,6 +6,8 @@ from apps.merchants.api.views import (
     NearbyMerchantsView,
     MerchantBranchListView,
     BranchToggleOrdersView,
+    MerchantStaffProfileView,
+    MerchantStaffToggleAcceptingOrdersView,
 )
 
 urlpatterns = [
@@ -18,5 +20,13 @@ urlpatterns = [
         "merchants/<uuid:merchant_pk>/branches/<uuid:branch_pk>/toggle-orders/",
         BranchToggleOrdersView.as_view(),
         name="branch-toggle-orders",
+    ),
+
+    # Merchant Panel — joriy tizimga kirgan merchant xodimi uchun
+    path("merchant/profile/", MerchantStaffProfileView.as_view(), name="merchant-staff-profile"),
+    path(
+        "merchant/branch/toggle-orders/",
+        MerchantStaffToggleAcceptingOrdersView.as_view(),
+        name="merchant-staff-toggle-orders",
     ),
 ]

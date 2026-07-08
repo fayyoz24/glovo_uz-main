@@ -48,3 +48,12 @@ class MerchantCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Merchant
         fields = ["name", "type", "description", "logo", "cover"]
+
+
+class MerchantStaffProfileSerializer(serializers.Serializer):
+    """Merchant panelidagi joriy xodim uchun o'z profili — merchant + filial ma'lumoti."""
+    merchant_id = serializers.UUIDField(source="merchant.id", read_only=True)
+    merchant_name = serializers.CharField(source="merchant.name", read_only=True)
+    merchant_status = serializers.CharField(source="merchant.status", read_only=True)
+    position = serializers.CharField(read_only=True)
+    branch = MerchantBranchSerializer(read_only=True)

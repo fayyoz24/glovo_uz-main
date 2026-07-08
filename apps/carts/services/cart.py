@@ -148,7 +148,7 @@ def remove_cart_item(user, item_id) -> None:
         cart.recalculate()
 
 
-def clear_cart(user) -> Cart:
+def clear_cart(user) -> None:
     cart = get_active_cart(user)
     if not cart:
         raise CartNotFound()
@@ -161,7 +161,6 @@ def clear_cart(user) -> Cart:
         cart.total = 0
         cart.coupon_code = ""
         cart.save()
-    return cart
 
 
 def apply_promo_code(user, code: str) -> Cart:
@@ -183,8 +182,7 @@ def apply_promo_code(user, code: str) -> Cart:
     promo = get_active_promo(code)
     if not promo:
         raise PromoCodeInvalid()
-    live_subtotal = sum(item.line_total for item in cart.items.all())
-    if promo.min_order_amount and live_subtotal < promo.min_order_amount:
+    if promo.min_order_amount and cart.subtotal < promo.min_order_amount:
         raise PromoMinOrderNotMet()
 
     cart.coupon_code = code.upper()
