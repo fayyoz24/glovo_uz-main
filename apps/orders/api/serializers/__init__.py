@@ -32,9 +32,6 @@ class OrderListSerializer(serializers.ModelSerializer):
     merchant_name = serializers.CharField(source="merchant.name", read_only=True)
     branch_name = serializers.CharField(source="branch.name", read_only=True)
     item_count = serializers.SerializerMethodField()
-    delivery_address = serializers.SerializerMethodField()
-    delivery_latitude = serializers.SerializerMethodField()
-    delivery_longitude = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -42,23 +39,10 @@ class OrderListSerializer(serializers.ModelSerializer):
             "id", "public_id", "merchant_name", "branch_name",
             "status", "payment_method", "payment_status",
             "total_amount", "currency", "placed_at", "item_count",
-            "delivery_address", "delivery_latitude", "delivery_longitude",
         ]
 
     def get_item_count(self, obj):
         return obj.items.count()
-
-    def get_delivery_address(self, obj):
-        snap = obj.address_snapshot
-        return snap.get("address_line", "") if snap else ""
-
-    def get_delivery_latitude(self, obj):
-        snap = obj.address_snapshot
-        return snap.get("latitude") if snap else None
-
-    def get_delivery_longitude(self, obj):
-        snap = obj.address_snapshot
-        return snap.get("longitude") if snap else None
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
@@ -80,14 +64,20 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         ]
 
 
+# class CheckoutSerializer(serializers.Serializer):
+#     address_id = serializers.IntegerField()
+#     payment_method = serializers.ChoiceField(choices=PaymentMethod.choices)
+#     tip_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0)
+# # apps/orders/api/serializers.py
+
 class CheckoutSerializer(serializers.Serializer):
     address_id = serializers.UUIDField()
     payment_method = serializers.ChoiceField(choices=PaymentMethod.choices)
     tip_amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0)
 
 class CancelOrderSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=50, required=False, allow_blank=True,  default="customer_request")
-    note = serializers.CharField(max_length=512, required=False, allow_blank=True, default="")
+    reason = serializers.CharField(max_length=50, required=False, default="customer_request")
+    note = serializers.CharField(max_length=512, required=False, default="")
 
 
 class MerchantOrderActionSerializer(serializers.Serializer):

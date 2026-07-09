@@ -4,7 +4,6 @@ from apps.accounts.models import (
     User,
     CustomerProfile,
     CourierProfile,
-    MerchantStaffProfile,
     TelegramLoginCode,
     DeviceToken,
 )
@@ -40,5 +39,4 @@ class TelegramLoginCodeAdmin(admin.ModelAdmin):
 
 
 admin.site.register(CustomerProfile)
-admin.site.register(MerchantStaffProfile)
 admin.site.register(DeviceToken)
