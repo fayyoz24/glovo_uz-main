@@ -24,3 +24,9 @@ class BranchNotAcceptingOrders(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "This branch is not currently accepting orders."
     default_code = "branch_not_accepting"
+
+
+class TooManyPendingMerchants(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Tasdiqlanishi kutilayotgan do'konlar soni limitiga yetdingiz (3 ta). Yangisini yaratishdan oldin birortasi tasdiqlanishini kuting."
+    default_code = "too_many_pending_merchants"

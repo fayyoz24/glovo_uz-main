@@ -344,7 +344,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            "merchant",
             "branch",
             "category",
             "name_uz",
@@ -355,6 +354,14 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "base_price",
             "sku",
         )
+        extra_kwargs = {
+            "name_en": {"required": False},
+            "description_uz": {"required": False},
+            "description_ru": {"required": False},
+            "sku": {"required": False},
+            "branch": {"required": False},
+            "category": {"required": False},
+        }
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:

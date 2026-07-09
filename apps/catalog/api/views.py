@@ -25,6 +25,8 @@ from apps.catalog.services import (
 from apps.catalog.exceptions import ProductNotFound
 from apps.catalog.permissions import IsMerchantOwnerOrManager
 from apps.common.pagination import StandardPagination
+from apps.merchants.exceptions import MerchantNotActive
+from apps.merchants.constants import MerchantStatus
 
 
 class CategoryListView(APIView):
@@ -103,9 +105,17 @@ class MerchantProductCreateView(APIView):
     permission_classes = [IsAuthenticated, IsMerchantOwnerOrManager]
 
     def post(self, request):
+        merchant = request.user.merchant_staff_profile.merchant
+        if merchant.status != MerchantStatus.ACTIVE:
+            raise MerchantNotActive(
+                "Do'koningiz hali admin tomonidan tasdiqlanmagan. "
+                "Tasdiqlangandan so'ng mahsulot qo'sha olasiz."
+            )
         serializer = ProductCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        merchant = request.user.merchant_staff_profile.merchant
+        branch = serializer.validated_data.get("branch")
+        if branch is not None and branch.merchant_id != merchant.id:
+            return Response({"detail": "Bu filial sizning do'koningizga tegishli emas."}, status=400)
         product = create_product(merchant, serializer.validated_data)
         return Response(ProductDetailSerializer(product).data, status=status.HTTP_201_CREATED)
 
