@@ -136,6 +136,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ─── Catalog ─────────────────────────────────────────────────────────────────
+# Mahsulot rasmi uchun maksimal hajm (KB). Do'kon egasi shundan katta rasm yuklay olmaydi.
+PRODUCT_IMAGE_MAX_SIZE_KB = config("PRODUCT_IMAGE_MAX_SIZE_KB", default=200, cast=int)
+
 
 # ─── Channels (WebSocket) ────────────────────────────────────────────────────
 

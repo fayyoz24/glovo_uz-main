@@ -1,4 +1,4 @@
-class MerchantType:
+class MerchantTypeCode:
     FOOD = "food"
     GROCERY = "grocery"
     PHARMACY = "pharmacy"

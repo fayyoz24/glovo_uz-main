@@ -28,17 +28,20 @@ class ModifierGroupInline(admin.TabularInline):
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ["name_ru", "parent", "sort_order", "is_active"]
-    list_filter = ["is_active"]
+    list_display = ["name_ru", "parent", "merchant_type", "sort_order", "is_active"]
+    list_filter = ["is_active", "merchant_type"]
     search_fields = ["name_ru", "name_uz"]
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ["name_ru", "merchant", "base_price", "status", "is_available", "created_at"]
-    list_filter = ["status", "is_active", "is_available"]
+    list_display = [
+        "name_ru", "merchant", "base_price", "discount_percent",
+        "stock_qty", "status", "is_available", "created_at",
+    ]
+    list_filter = ["status", "is_active", "is_available", "track_stock"]
     search_fields = ["name_ru", "name_uz", "sku"]
-    inlines = [ProductImageInline, ProductVariantInline, ModifierGroupInline]
+    inlines = [ProductVariantInline, ModifierGroupInline]
 
 
 @admin.register(ProductModifierGroup)

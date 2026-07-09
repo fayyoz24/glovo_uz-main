@@ -30,12 +30,21 @@ from apps.merchants.constants import MerchantStatus
 
 
 class CategoryListView(APIView):
-    """GET /api/v1/categories/ — barcha faol kategoriyalar"""
+    """GET /api/v1/categories/?parent=&merchant_type=&merchant= — barcha faol kategoriyalar"""
     permission_classes = [AllowAny]
 
     def get(self, request):
         parent_id = request.query_params.get("parent")
-        categories = get_active_categories(parent_id=parent_id)
+        merchant_type_code = request.query_params.get("merchant_type")
+
+        merchant_id = request.query_params.get("merchant")
+        if merchant_id and not merchant_type_code:
+            from apps.merchants.selectors import get_merchant_by_id
+            merchant = get_merchant_by_id(merchant_id)
+            if merchant:
+                merchant_type_code = merchant.type
+
+        categories = get_active_categories(parent_id=parent_id, merchant_type_code=merchant_type_code)
         return Response(ProductCategorySerializer(categories, many=True).data)
 
 
