@@ -2,6 +2,8 @@ from django.db import transaction
 from apps.catalog.constants import ProductStatus
 from apps.catalog.models import Product
 from apps.catalog.exceptions import ProductNotFound
+import os
+import uuid
 
 
 def create_product(merchant, validated_data: dict) -> Product:
@@ -42,3 +44,5 @@ def toggle_product_availability(product_id, merchant, is_available: bool) -> Pro
     product.is_available = is_available
     product.save(update_fields=["is_available", "updated_at"])
     return product
+
+

@@ -134,6 +134,8 @@ USE_TZ = True
 # ─── Static ──────────────────────────────────────────────────────────────────
 
 STATIC_URL = "static/"
+MEDIA_URL = '/media/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ─── Catalog ─────────────────────────────────────────────────────────────────

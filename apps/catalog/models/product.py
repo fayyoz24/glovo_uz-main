@@ -3,6 +3,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from apps.catalog.constants import ProductStatus
 from apps.catalog.validators import validate_product_image_size
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+from apps.catalog.utils.util import product_image_upload_path
 
 
 class Product(models.Model):
@@ -28,8 +32,8 @@ class Product(models.Model):
         related_name="products",
     )
     name_uz = models.CharField(max_length=200)
-    name_ru = models.CharField(max_length=200)
-    name_en = models.CharField(max_length=200, blank=True)
+    name_ru = models.CharField(max_length=200, blank=True, null=True)
+    name_en = models.CharField(max_length=200, blank=True, null=True)
     description_uz = models.TextField(blank=True)
     description_ru = models.TextField(blank=True)
     # base_price stored in integer smallest unit (tiyin)
@@ -38,11 +42,9 @@ class Product(models.Model):
 
     # Mahsulot rasmi — do'kon egasi maksimal 1 ta rasm yuklay oladi.
     image = models.ImageField(
-        upload_to="catalog/product_images/",
+        upload_to=product_image_upload_path,
         null=True,
         blank=True,
-        validators=[validate_product_image_size],
-        help_text="Mahsulot rasmi (1 ta, default max hajm — 200 KB)",
     )
 
     # Chegirma foizi (0 — chegirma yo'q)
@@ -124,6 +126,38 @@ class Product(models.Model):
             update_fields += ["status", "is_available"]
 
         self.save(update_fields=update_fields)
+
+    def save(self, *args, **kwargs):
+        if self.image:
+            img = Image.open(self.image)
+
+            # PNG kabi RGBA rasmlarni RGB ga o'tkazish
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            # Maksimal o'lcham
+            img.thumbnail((1200, 1200))
+
+            output = BytesIO()
+
+            img.save(
+                output,
+                format="JPEG",
+                quality=80,
+                optimize=True,
+            )
+
+            output.seek(0)
+
+            filename = os.path.splitext(self.image.name)[0] + ".jpg"
+
+            self.image.save(
+                filename,
+                ContentFile(output.read()),
+                save=False,
+            )
+
+        super().save(*args, **kwargs)
 
 
 class ProductImage(models.Model):
