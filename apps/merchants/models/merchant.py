@@ -1,13 +1,13 @@
 import uuid
 from django.db import models
-from apps.merchants.constants import MerchantType, MerchantStatus
+from apps.merchants.constants import MerchantTypeCode, MerchantStatus
 
 
 class Merchant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
-    type = models.CharField(max_length=20, choices=MerchantType.CHOICES, default=MerchantType.FOOD)
+    type = models.CharField(max_length=20, choices=MerchantTypeCode.CHOICES, default=MerchantTypeCode.FOOD)
     description = models.TextField(blank=True)
     logo = models.ImageField(upload_to="merchants/logos/", null=True, blank=True)
     cover = models.ImageField(upload_to="merchants/covers/", null=True, blank=True)

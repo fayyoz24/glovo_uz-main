@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.carts.models import Cart, CartItem
 from apps.carts.constants import CartStatus
 from apps.carts.selectors import get_active_cart
+from apps.catalog.models import Product
 from apps.orders.models import Order, OrderItem, OrderItemModifier, OrderStatusHistory
 from apps.orders.constants import OrderStatus, PaymentMethod, PaymentStatus
 from apps.orders.exceptions import EmptyCartError, BranchClosedError, CheckoutError
@@ -42,6 +43,11 @@ def _validate_branch(branch):
 
 def _create_order_items_from_cart(order: Order, cart: Cart):
     for cart_item in cart.items.prefetch_related("modifiers__modifier_option").all():
+        # Mahsulot ombordagi sonini kamaytiramiz (0 ga tushsa avtomatik "tugagan" bo'ladi).
+        # select_for_update — parallel xaridlarda race-condition bo'lmasligi uchun.
+        product = Product.objects.select_for_update().get(pk=cart_item.product_id)
+        product.reduce_stock(cart_item.qty)
+
         order_item = OrderItem.objects.create(
             order=order,
             product_id=cart_item.product_id,

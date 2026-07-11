@@ -1,6 +1,12 @@
 from django.contrib import admin
-from apps.merchants.models import Merchant, MerchantBranch, BranchWorkingHour, MerchantStaffProfile
+from apps.merchants.models import Merchant, MerchantBranch, BranchWorkingHour, MerchantStaffProfile, MerchantType
 from apps.merchants.services import approve_merchant, reject_merchant
+
+
+@admin.register(MerchantType)
+class MerchantTypeAdmin(admin.ModelAdmin):
+    list_display = ["name_uz", "code", "sort_order", "is_active"]
+    search_fields = ["name_uz", "name_ru", "code"]
 
 
 class BranchWorkingHourInline(admin.TabularInline):

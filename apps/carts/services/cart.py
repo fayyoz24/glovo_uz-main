@@ -66,14 +66,14 @@ def add_item_to_cart(
             cart.branch = branch
             cart.save(update_fields=["branch", "updated_at"])
 
-        # Resolve variant
-        unit_price = product.base_price
-        variant = None
+
+        unit_price = product.discounted_price
+        variant = None                          # <-- BU QATOR SHART, olib tashlanmasin
         if variant_id:
             variant = ProductVariant.objects.filter(id=variant_id, product=product, is_active=True).first()
             if not variant:
                 raise InvalidVariant()
-            unit_price = variant.final_price
+            unit_price = product.discounted_price + variant.price_delta
 
         # Validate and resolve modifiers
         resolved_modifiers = []

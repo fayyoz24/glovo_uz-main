@@ -11,6 +11,17 @@ class ProductCategory(models.Model):
         on_delete=models.SET_NULL,
         related_name="children",
     )
+    merchant_type = models.ForeignKey(
+        "merchants.MerchantType",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="categories",
+        help_text=(
+            "Kategoriya qaysi do'kon turiga tegishli (masalan: restoran/fastfood yoki pharmacy). "
+            "Bo'sh qoldirilsa, kategoriya barcha do'kon turlari uchun umumiy bo'ladi."
+        ),
+    )
     name_uz = models.CharField(max_length=150)
     name_ru = models.CharField(max_length=150)
     name_en = models.CharField(max_length=150, blank=True)
@@ -23,6 +34,9 @@ class ProductCategory(models.Model):
     class Meta:
         db_table = "catalog_product_category"
         ordering = ["sort_order", "name_ru"]
+        indexes = [
+            models.Index(fields=["merchant_type", "is_active"]),
+        ]
 
     def __str__(self):
         return self.name_ru

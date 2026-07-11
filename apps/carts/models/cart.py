@@ -53,9 +53,13 @@ class Cart(models.Model):
         return timezone.now() > self.expires_at
 
     def recalculate(self):
-        """Recalculate subtotal and total from items."""
-        items = self.items.all()
-        self.subtotal = sum(item.line_total for item in items)
+        """Recalculate subtotal and total from items.
+        aggregate() ataylab ishlatiladi — u prefetch_related cache'ni chetlab o'tadi,
+        shuning uchun cart avvalroq prefetch qilingan bo'lsa ham har doim DB'dagi
+        eng yangi qty/line_total qiymatlarini o'qiydi.
+        """
+        from django.db.models import Sum
+        self.subtotal = self.items.aggregate(total=Sum("line_total"))["total"] or 0
         self.total = self.subtotal + self.delivery_fee + self.service_fee - self.discount_amount
         self.save(update_fields=["subtotal", "total", "updated_at"])
 
