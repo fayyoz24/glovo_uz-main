@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.merchants.models import Merchant, MerchantBranch, BranchWorkingHour
+from apps.common.utils.fields import CompressedImageField
 
 
 class BranchWorkingHourSerializer(serializers.ModelSerializer):
@@ -45,12 +46,18 @@ class MerchantDetailSerializer(serializers.ModelSerializer):
 
 
 class MerchantCreateSerializer(serializers.ModelSerializer):
+    logo = CompressedImageField(required=False, allow_null=True)
+    cover = CompressedImageField(required=False, allow_null=True)
+
     class Meta:
         model = Merchant
         fields = ["name", "type", "description", "logo", "cover"]
 
 
 class MerchantUpdateSerializer(serializers.ModelSerializer):
+    logo = CompressedImageField(required=False, allow_null=True)
+    cover = CompressedImageField(required=False, allow_null=True)
+
     class Meta:
         model = Merchant
         fields = ["name", "type", "description", "logo", "cover"]
@@ -64,5 +71,7 @@ class MerchantStaffProfileSerializer(serializers.Serializer):
     merchant_type = serializers.CharField(source="merchant.type", read_only=True)
     merchant_description = serializers.CharField(source="merchant.description", read_only=True)
     merchant_status = serializers.CharField(source="merchant.status", read_only=True)
+    merchant_logo = serializers.ImageField(source="merchant.logo", read_only=True, allow_null=True)
+    merchant_cover = serializers.ImageField(source="merchant.cover", read_only=True, allow_null=True)
     position = serializers.CharField(read_only=True)
     branch = MerchantBranchSerializer(read_only=True)

@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from apps.merchants.constants import MerchantTypeCode, MerchantStatus
-
+from apps.merchants.utils.util import merchant_logo_upload_path, merchant_cover_upload_path
 
 class Merchant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -9,8 +9,8 @@ class Merchant(models.Model):
     slug = models.SlugField(max_length=200, unique=True)
     type = models.CharField(max_length=20, choices=MerchantTypeCode.CHOICES, default=MerchantTypeCode.FOOD)
     description = models.TextField(blank=True)
-    logo = models.ImageField(upload_to="merchants/logos/", null=True, blank=True)
-    cover = models.ImageField(upload_to="merchants/covers/", null=True, blank=True)
+    logo = models.ImageField(upload_to=merchant_logo_upload_path, null=True, blank=True)
+    cover = models.ImageField(upload_to=merchant_cover_upload_path, null=True, blank=True)
     rating_avg = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     total_reviews = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=20, choices=MerchantStatus.CHOICES, default=MerchantStatus.PENDING)

@@ -6,6 +6,7 @@ from apps.catalog.models import (
     ProductModifierGroup,
     ProductModifierOption,
 )
+from apps.common.utils.fields import CompressedImageField
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -161,6 +162,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     """Merchant panel — yangi mahsulot qo'shish."""
+    image = CompressedImageField(required=False, allow_null=True)
 
     class Meta:
         model = Product
@@ -199,6 +201,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
+    image = CompressedImageField(required=False, allow_null=True)
+
     class Meta:
         model = Product
         fields = (

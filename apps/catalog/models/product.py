@@ -7,7 +7,7 @@ from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 from apps.catalog.utils.util import product_image_upload_path
-
+import os
 
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

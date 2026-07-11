@@ -95,6 +95,25 @@ class ProductSearchView(APIView):
 
 # ── Merchant panel views ───────────────────────────────────────────────────────
 
+class MerchantCategoryListView(APIView):
+    """
+    GET /api/v1/merchant/categories/?parent=
+    Merchant panel uchun — login qilgan do'kon egasining o'z do'kon turiga
+    mos kategoriyalarni qaytaradi. Frontend hech qanday merchant_id/merchant_type
+    yubormasligi kerak — bu yerda avtomatik request.user'dan olinadi.
+    """
+    permission_classes = [IsAuthenticated, IsMerchantOwnerOrManager]
+
+    def get(self, request):
+        merchant = request.user.merchant_staff_profile.merchant
+        parent_id = request.query_params.get("parent")
+        categories = get_active_categories(
+            parent_id=parent_id,
+            merchant_type_code=merchant.type,
+        )
+        return Response(ProductCategorySerializer(categories, many=True).data)
+
+
 class MerchantProductListView(APIView):
     """GET /api/v1/merchant/products/ — merchant panel uchun mahsulotlar ro'yxati"""
     permission_classes = [IsAuthenticated, IsMerchantOwnerOrManager]
