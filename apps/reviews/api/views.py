@@ -97,7 +97,7 @@ class OrderReviewCreateView(APIView):
         except ReviewError as e:
             return Response({"detail": e.message, "code": e.code}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(ReviewDetailSerializer(review).data, status=status.HTTP_201_CREATED)
+        return Response(ReviewDetailSerializer(review, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class ReviewDetailUpdateView(APIView):
@@ -118,7 +118,7 @@ class ReviewDetailUpdateView(APIView):
         review = self._get_review(review_id, request.user)
         if review is None:
             return Response({"detail": "Topilmadi."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(ReviewDetailSerializer(review).data)
+        return Response(ReviewDetailSerializer(review, context={"request": request}).data)
 
     def patch(self, request, review_id):
         review = self._get_review(review_id, request.user)
@@ -137,7 +137,7 @@ class ReviewDetailUpdateView(APIView):
         except ReviewError as e:
             return Response({"detail": e.message, "code": e.code}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(ReviewDetailSerializer(review).data)
+        return Response(ReviewDetailSerializer(review, context={"request": request}).data)
 
 
 class MyReviewsView(APIView):
@@ -147,7 +147,7 @@ class MyReviewsView(APIView):
 
     def get(self, request):
         reviews = get_customer_reviews(request.user.id)
-        return Response(ReviewDetailSerializer(reviews, many=True).data)
+        return Response(ReviewDetailSerializer(reviews, many=True, context={"request": request}).data)
 
 
 class ReviewFlagView(APIView):
@@ -192,7 +192,7 @@ class MerchantReviewListView(APIView):
         rating = int(rating) if rating and rating.isdigit() else None
 
         reviews = get_merchant_reviews(merchant_id=merchant_id, rating=rating)
-        return Response(MerchantReviewListSerializer(reviews, many=True).data)
+        return Response(MerchantReviewListSerializer(reviews, many=True, context={"request": request}).data)
 
 
 class MerchantRatingStatsView(APIView):
@@ -230,7 +230,7 @@ class MerchantPanelReviewListView(APIView):
         rating = int(rating) if rating and rating.isdigit() else None
 
         reviews = get_merchant_reviews(merchant_id=merchant_id, rating=rating)
-        return Response(MerchantReviewListSerializer(reviews, many=True).data)
+        return Response(MerchantReviewListSerializer(reviews, many=True, context={"request": request}).data)
 
 
 class MerchantReplyView(APIView):
@@ -266,7 +266,7 @@ class MerchantReplyView(APIView):
         except ReviewError as e:
             return Response({"detail": e.message, "code": e.code}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(ReviewDetailSerializer(review).data)
+        return Response(ReviewDetailSerializer(review, context={"request": request}).data)
 
 
 # ═════════════════════════ ADMIN ═════════════════════════════════════════════
@@ -301,7 +301,7 @@ class AdminReviewDetailView(APIView):
         review = get_review_by_id(review_id)
         if review is None:
             return Response({"detail": "Topilmadi."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(AdminReviewDetailSerializer(review).data)
+        return Response(AdminReviewDetailSerializer(review, context={"request": request}).data)
 
 
 class AdminReviewHideView(APIView):

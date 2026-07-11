@@ -28,7 +28,7 @@ class MerchantListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views."""
     class Meta:
         model = Merchant
-        fields = ["id", "name", "slug", "type", "logo", "rating_avg", "total_reviews", "status"]
+        fields = ["id", "name", "slug", "type", "logo", "cover", "rating_avg", "total_reviews", "status"]
         read_only_fields = ["id", "slug", "rating_avg", "total_reviews"]
 
 

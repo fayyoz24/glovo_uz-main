@@ -145,7 +145,7 @@ class MerchantProductCreateView(APIView):
         if branch is not None and branch.merchant_id != merchant.id:
             return Response({"detail": "Bu filial sizning do'koningizga tegishli emas."}, status=400)
         product = create_product(merchant, serializer.validated_data)
-        return Response(ProductDetailSerializer(product).data, status=status.HTTP_201_CREATED)
+        return Response(ProductDetailSerializer(product, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class MerchantProductUpdateView(APIView):
@@ -160,7 +160,7 @@ class MerchantProductUpdateView(APIView):
             product = update_product(pk, merchant, serializer.validated_data)
         except ProductNotFound as e:
             return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        return Response(ProductDetailSerializer(product).data)
+        return Response(ProductDetailSerializer(product, context={"request": request}).data)
 
 
 class ProductToggleAvailabilityView(APIView):
