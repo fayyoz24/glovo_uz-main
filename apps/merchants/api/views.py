@@ -47,7 +47,7 @@ class MerchantListView(APIView):
         merchants = get_active_merchants(merchant_type=merchant_type)
         paginator = StandardPagination()
         page = paginator.paginate_queryset(merchants, request)
-        serializer = MerchantListSerializer(page, many=True)
+        serializer = MerchantListSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -58,7 +58,7 @@ class MerchantDetailView(APIView):
         merchant = get_merchant_by_id(pk)
         if not merchant:
             raise MerchantNotFound()
-        return Response(MerchantDetailSerializer(merchant).data)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data)
 
 
 class NearbyMerchantsView(APIView):
@@ -81,7 +81,7 @@ class MerchantCreateView(APIView):
         serializer = MerchantCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         merchant = create_merchant(request.user, serializer.validated_data)
-        return Response(MerchantDetailSerializer(merchant).data, status=status.HTTP_201_CREATED)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class MerchantBranchListView(APIView):
@@ -121,7 +121,7 @@ class MerchantSelfRegisterView(APIView):
         serializer = MerchantCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         merchant = register_merchant_with_owner(request.user, serializer.validated_data)
-        return Response(MerchantDetailSerializer(merchant).data, status=status.HTTP_201_CREATED)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class MyMerchantApplicationsView(APIView):
@@ -137,7 +137,7 @@ class MyMerchantApplicationsView(APIView):
     def get(self, request):
         merchants = get_merchants_owned_by(request.user)
         return Response({
-            "applications": MerchantDetailSerializer(merchants, many=True).data,
+            "applications": MerchantDetailSerializer(merchants, many=True, context={"request": request}).data,
             "pending_count": sum(1 for m in merchants if m.status == "pending"),
             "max_pending": MAX_PENDING_MERCHANTS_PER_OWNER,
             "has_active_panel": hasattr(request.user, "merchant_staff_profile"),
@@ -153,14 +153,14 @@ class MyMerchantView(APIView):
 
     def get(self, request):
         merchant = request.user.merchant_staff_profile.merchant
-        return Response(MerchantDetailSerializer(merchant).data)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data)
 
     def patch(self, request):
         merchant = request.user.merchant_staff_profile.merchant
         serializer = MerchantUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         merchant = update_merchant(merchant, serializer.validated_data)
-        return Response(MerchantDetailSerializer(merchant).data)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data)
 
 
 class MyBranchView(APIView):
@@ -277,7 +277,7 @@ class AdminPendingMerchantsView(APIView):
 
     def get(self, request):
         merchants = get_pending_merchants()
-        return Response(MerchantDetailSerializer(merchants, many=True).data)
+        return Response(MerchantDetailSerializer(merchants, many=True, context={"request": request}).data)
 
 
 class AdminMerchantApproveView(APIView):
@@ -289,7 +289,7 @@ class AdminMerchantApproveView(APIView):
         if not merchant:
             raise MerchantNotFound()
         merchant = approve_merchant(merchant)
-        return Response(MerchantDetailSerializer(merchant).data)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data)
 
 
 class AdminMerchantRejectView(APIView):
@@ -301,7 +301,7 @@ class AdminMerchantRejectView(APIView):
         if not merchant:
             raise MerchantNotFound()
         merchant = reject_merchant(merchant)
-        return Response(MerchantDetailSerializer(merchant).data)
+        return Response(MerchantDetailSerializer(merchant, context={"request": request}).data)
 
 
 class MerchantStaffProfileView(APIView):
@@ -313,7 +313,7 @@ class MerchantStaffProfileView(APIView):
 
     def get(self, request):
         profile = request.user.merchant_staff_profile
-        return Response(MerchantStaffProfileSerializer(profile).data)
+        return Response(MerchantStaffProfileSerializer(profile, context={"request": request}).data)
 
 
 class MerchantStaffToggleAcceptingOrdersView(APIView):
