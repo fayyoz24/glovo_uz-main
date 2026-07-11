@@ -4,6 +4,7 @@ from apps.catalog.api.views import (
     BranchProductListView,
     ProductDetailView,
     ProductSearchView,
+    MerchantCategoryListView,
     MerchantProductListView,
     MerchantProductCreateView,
     MerchantProductUpdateView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path("search/", ProductSearchView.as_view(), name="product-search"),
 
     # Merchant panel
+    path("merchant/categories/", MerchantCategoryListView.as_view(), name="merchant-category-list"),
     path("merchant/products/", MerchantProductListView.as_view(), name="merchant-product-list"),
     path("merchant/products/create/", MerchantProductCreateView.as_view(), name="merchant-product-create"),
     path("merchant/products/<uuid:pk>/", MerchantProductUpdateView.as_view(), name="merchant-product-update"),
