@@ -50,16 +50,33 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
     merchant_name = serializers.CharField(source="merchant.name", read_only=True)
     branch_name = serializers.CharField(source="branch.name", read_only=True)
+    branch_lat = serializers.DecimalField(source="branch.latitude", max_digits=9, decimal_places=6, read_only=True)
+    branch_lng = serializers.DecimalField(source="branch.longitude", max_digits=9, decimal_places=6, read_only=True)
+
+    courier_id = serializers.UUIDField(source="courier.id", read_only=True, allow_null=True)
+    courier_name = serializers.CharField(source="courier.full_name", read_only=True, allow_null=True)
+    courier_phone = serializers.CharField(source="courier.phone", read_only=True, allow_null=True)
+    courier_lat = serializers.SerializerMethodField()
+    courier_lng = serializers.SerializerMethodField()
+
+    def get_courier_lat(self, obj):
+        profile = getattr(obj.courier, "courier_profile", None) if obj.courier_id else None
+        return profile.current_lat if profile else None
+
+    def get_courier_lng(self, obj):
+        profile = getattr(obj.courier, "courier_profile", None) if obj.courier_id else None
+        return profile.current_lng if profile else None
 
     class Meta:
         model = Order
         fields = [
-            "id", "public_id", "merchant_name", "branch_name",
+            "id", "public_id", "merchant_name", "branch_name", "branch_lat", "branch_lng",
             "status", "payment_method", "payment_status",
             "address_snapshot", "subtotal", "delivery_fee", "service_fee",
             "discount_amount", "tip_amount", "total_amount", "currency",
             "placed_at", "confirmed_at", "picked_up_at", "delivered_at",
             "cancel_reason", "cancel_note",
+            "courier_id", "courier_name", "courier_phone", "courier_lat", "courier_lng",
             "items", "status_history",
         ]
 
