@@ -2,3 +2,28 @@ python -m telegram_bot.main # botni ishga tushirish
 celery -A config worker -l info --pool=solo # celery
 docker start redis # docker
 python manage.py runserver # serverni ishga tushirish
+
+
+
+# migratsiya (birinchi marta yoki model o'zgarganda)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../.env exec backend-api python manage.py migrate
+
+# superuser yaratish
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../.env exec backend-api python manage.py createsuperuser
+
+# to'xtatish
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../.env down
+
+# loglarni ko'rish
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../.env logs -f backend-api
+
+
+
+
+
+
+docker/ papkasiga o'ting va ko'taring
+cd docker
+docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+  --env-file ../.env \
+  up --build postgres redis backend-api channels-worker celery-worker celery-beat telegram-bot
