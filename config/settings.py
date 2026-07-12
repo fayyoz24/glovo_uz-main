@@ -83,13 +83,27 @@ TEMPLATES = [
 
 
 # ─── Database ────────────────────────────────────────────────────────────────
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# DB_ENGINE=sqlite -> quick local testing with zero setup (no Postgres needed).
+# Anything else (default) -> Postgres, matching docker-compose's postgres service
+# and the POSTGRES_* variables already defined in .env.example.
+if config("DB_ENGINE", default="postgres") == "sqlite":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("POSTGRES_DB", default="dasturxon_dev"),
+            "USER": config("POSTGRES_USER", default="dasturxon_user"),
+            "PASSWORD": config("POSTGRES_PASSWORD", default="devpassword"),
+            "HOST": config("POSTGRES_HOST", default="localhost"),
+            "PORT": config("POSTGRES_PORT", default="5432"),
+        }
+    }
 
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
@@ -131,13 +145,46 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ─── Static ──────────────────────────────────────────────────────────────────
+# ─── Static & Media ──────────────────────────────────────────────────────────
+# NOTE: these paths must match docker/django/Dockerfile's `mkdir` and
+# docker-compose.yml's volume mounts (static_volume:/app/staticfiles,
+# media_volume:/app/mediafiles) or collectstatic fails and uploaded files
+# get written outside the persistent volume (lost on every redeploy).
 
 STATIC_URL = "static/"
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / "media"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "mediafiles"
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ─── File storage (local disk by default; S3-compatible when STORAGE_BACKEND=s3) ──
+# Local disk (default): files live in MEDIA_ROOT above, served by nginx via the
+# `media_volume` — this is fine and genuinely free for a single-VM deployment
+# (e.g. Oracle Cloud) as long as the volume is backed up.
+#
+# S3-compatible (STORAGE_BACKEND=s3): works with AWS S3 *and* any S3-compatible
+# provider (e.g. Cloudflare R2's free tier — 10GB storage, zero egress fees) by
+# pointing AWS_S3_ENDPOINT_URL at the provider's endpoint. Useful once you want
+# uploads to survive VM rebuilds independently, or to scale beyond one instance.
+if config("STORAGE_BACKEND", default="local") == "s3":
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
+    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
+    AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="auto")
+    AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL", default="") or None
+    AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default="") or None
+    AWS_DEFAULT_ACL = None  # R2/most S3-compatible providers reject ACL headers
+    AWS_QUERYSTRING_AUTH = False  # public bucket -> clean URLs without signed query params
+    AWS_S3_FILE_OVERWRITE = False
 
 # ─── Catalog ─────────────────────────────────────────────────────────────────
 # Mahsulot rasmi uchun maksimal hajm (KB). Do'kon egasi shundan katta rasm yuklay olmaydi.
@@ -146,14 +193,25 @@ PRODUCT_IMAGE_MAX_SIZE_KB = config("PRODUCT_IMAGE_MAX_SIZE_KB", default=200, cas
 
 # ─── Channels (WebSocket) ────────────────────────────────────────────────────
 
+_redis_password = config("REDIS_PASSWORD", default="")
+_redis_host_port = (
+    config("REDIS_HOST", default="127.0.0.1"),
+    config("REDIS_PORT", default=6379, cast=int),
+)
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(
-                config("REDIS_HOST", default="127.0.0.1"),
-                config("REDIS_PORT", default=6379, cast=int),
-            )],
+            # channels-redis accepts either (host, port) tuples or full redis:// URLs.
+            # We use a URL here so the REDIS_PASSWORD set by docker-compose's
+            # `--requirepass` is actually applied — plain (host, port) tuples
+            # have no way to carry auth and would fail to connect in prod.
+            "hosts": [
+                f"redis://:{_redis_password}@{_redis_host_port[0]}:{_redis_host_port[1]}/0"
+                if _redis_password
+                else f"redis://{_redis_host_port[0]}:{_redis_host_port[1]}/0"
+            ],
         },
     }
 }

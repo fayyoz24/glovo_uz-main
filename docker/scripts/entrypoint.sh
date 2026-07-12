@@ -53,6 +53,9 @@ case "${SERVICE_ROLE}" in
   channels)
     echo ">>> [entrypoint] channels/websocket worker ready, skipping migrate/collectstatic"
     ;;
+  telegram_bot)
+    echo ">>> [entrypoint] telegram bot ready, skipping migrate/collectstatic"
+    ;;
   *)
     echo ">>> [entrypoint] unknown SERVICE_ROLE='${SERVICE_ROLE}', running default boot steps"
     run_migrations
