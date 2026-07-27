@@ -15,6 +15,7 @@ django-celery-beat
 channels
 channels-redis
 daphne
+gunicorn
 
 # Storage
 boto3
