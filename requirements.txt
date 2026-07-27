@@ -6,10 +6,9 @@ djangorestframework-simplejwt
 # Database
 psycopg2-binary
 
-# Cache / broker
+# Cache / Broker
 redis
 celery
-celery[redis]
 django-celery-beat
 
 # Realtime
@@ -21,23 +20,43 @@ daphne
 boto3
 django-storages
 
-# HTTP clients
+# HTTP Clients
 requests
 httpx
 
-# Telegram bot
-aiogram==3.13.1
+# Telegram Bot
+aiogram
 
 # Utils
 Pillow
 python-decouple
 phonenumbers
 django-cors-headers
+django-filter
+python-dotenv
+python-crontab
+python-docx
+docxtpl
+docx2pdf
+qrcode
+ujson
 
 # Monitoring
-sentry-sdk[django]
+sentry-sdk
 
 # Testing
 pytest
 pytest-django
 factory-boy
+
+# Async
+aiofiles
+aiohttp
+
+# Data Processing
+numpy
+pandas
+
+# AWS
+botocore
+s3transfer
