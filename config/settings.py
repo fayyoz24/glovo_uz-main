@@ -325,7 +325,11 @@ CORS_ALLOWED_ORIGINS = config(
     default="http://localhost:3000,http://localhost:5173",
 ).split(",")
 
-
+# ─── CSRF / HTTPS (reverse proxy orqasida) ──────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in config("DJANGO_CSRF_TRUSTED_ORIGINS", default="").split(",") if origin.strip()
+]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # ─── Sentry ──────────────────────────────────────────────────────────────────
 # FIX: Sentry endi to'g'ri initialize qilinadi
 
