@@ -90,9 +90,11 @@ class CourierActiveOrdersView(views.APIView):
 
     def get(self, request):
         from apps.orders.selectors import get_active_orders_for_courier
-        from apps.orders.api.serializers import OrderListSerializer
-        orders = get_active_orders_for_courier(request.user)
-        return Response(OrderListSerializer(orders, many=True).data)
+        from apps.orders.api.serializers import OrderDetailSerializer
+        orders = get_active_orders_for_courier(request.user).prefetch_related(
+            "items__modifiers"
+        )
+        return Response(OrderDetailSerializer(orders, many=True).data)
 
 
 class CourierEarningsView(views.APIView):

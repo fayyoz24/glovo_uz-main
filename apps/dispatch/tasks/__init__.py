@@ -74,6 +74,22 @@ def trigger_dispatch_for_order(self, order_id: str):
 
 
 @shared_task(bind=True, max_retries=1)
+def dispatch_waiting_orders(self):
+    """
+    Biror kuryer onlayn bo'lganda chaqiriladi (apps.couriers.services.go_online).
+    Kuryer kutayotgan barcha buyurtmalarga navbat bo'yicha taklif yuborishga
+    urinadi — 5 daqiqalik retry taymerini kutib o'tirmasdan.
+    """
+    try:
+        from apps.dispatch.services import dispatch_pending_orders
+        dispatched = dispatch_pending_orders()
+        if dispatched:
+            print(f"[DISPATCH] Online-trigger: {len(dispatched)} ta buyurtmaga taklif yuborildi")
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=5)
+
+
+@shared_task(bind=True, max_retries=1)
 def retry_pending_dispatch(self, order_id: str):
     """
     Buyurtma "pending" (kuryer kutish) holatida PENDING_RETRY_SECONDS

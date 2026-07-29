@@ -11,7 +11,7 @@ from apps.carts.selectors import get_active_cart
 from apps.catalog.models import Product
 from apps.orders.models import Order, OrderItem, OrderItemModifier, OrderStatusHistory
 from apps.orders.constants import OrderStatus, PaymentMethod, PaymentStatus
-from apps.orders.exceptions import EmptyCartError, BranchClosedError, CheckoutError
+from apps.orders.exceptions import EmptyCartError, BranchClosedError, CheckoutError, PhoneRequiredError
 
 
 def _build_address_snapshot(address) -> dict:
@@ -28,6 +28,11 @@ def _build_address_snapshot(address) -> dict:
         "district": address.district,
         "city": address.city,
     }
+
+
+def _validate_phone(user):
+    if not user.phone:
+        raise PhoneRequiredError()
 
 
 def _validate_branch(branch):
@@ -76,6 +81,8 @@ def checkout_from_cart(
     tip_amount=None,
 ) -> Order:
     from decimal import Decimal
+
+    _validate_phone(user)
 
     cart = get_active_cart(user)
     if cart is None or not cart.items.exists():

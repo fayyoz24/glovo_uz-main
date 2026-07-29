@@ -1,6 +1,6 @@
 from django.urls import path
 
-from reviews.api.views import (
+from apps.reviews.api.views import (
     AdminReviewDetailView,
     AdminReviewHideView,
     AdminReviewListView,

@@ -18,7 +18,7 @@ def notify_support_new_complaint(self, complaint_id: str):
     Notify the support team (e.g. via Telegram or email) when a new complaint
     is created. Triggered from create_complaint service.
     """
-    from support.selectors import get_complaint_by_id
+    from apps.support.selectors import get_complaint_by_id
 
     complaint = get_complaint_by_id(complaint_id=uuid.UUID(complaint_id))
     if not complaint:
@@ -46,7 +46,7 @@ def notify_customer_complaint_updated(self, complaint_id: str, new_status: str):
     """
     Notify the customer via push/SMS when their complaint status changes.
     """
-    from support.selectors import get_complaint_by_id
+    from apps.support.selectors import get_complaint_by_id
 
     complaint = get_complaint_by_id(complaint_id=uuid.UUID(complaint_id))
     if not complaint:
@@ -78,7 +78,7 @@ def auto_close_resolved_complaints():
     RESOLVED state for more than 72 hours without any customer response.
     Run daily via Celery Beat.
     """
-    from support.models import Complaint
+    from apps.support.models import Complaint
 
     cutoff = timezone.now() - timezone.timedelta(hours=72)
     qs = Complaint.objects.filter(

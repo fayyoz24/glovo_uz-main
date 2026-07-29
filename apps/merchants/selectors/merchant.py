@@ -3,7 +3,7 @@ from apps.merchants.constants import MerchantStatus
 
 
 def get_active_merchants(merchant_type: str | None = None):
-    qs = Merchant.objects.filter(status=MerchantStatus.ACTIVE)
+    qs = Merchant.objects.filter(status=MerchantStatus.ACTIVE).prefetch_related("branches")
     if merchant_type:
         qs = qs.filter(type=merchant_type)
     return qs.order_by("-rating_avg")

@@ -56,7 +56,7 @@ from apps.reviews.services import ReviewService
 def _get_order_or_404(order_id, customer):
     """orders.Order'ni topadi, yo'q bo'lsa None qaytaradi."""
     try:
-        from orders.models import Order
+        from apps.orders.models import Order
         return Order.objects.select_related("branch__merchant", "courier").get(
             id=order_id, customer=customer
         )

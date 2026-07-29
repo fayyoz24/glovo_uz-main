@@ -12,9 +12,9 @@ def recalculate_merchant_ratings():
     """
     from django.db.models import Avg
 
-    from merchants.models import Merchant
-    from reviews.constants import ReviewStatus
-    from reviews.models import Review
+    from apps.merchants.models import Merchant
+    from apps.reviews.constants import ReviewStatus
+    from apps.reviews.models import Review
 
     merchants = Merchant.objects.values_list("id", flat=True)
     updated = 0
@@ -40,9 +40,9 @@ def recalculate_courier_ratings():
     """
     from django.db.models import Avg
 
-    from accounts.models import CourierProfile
-    from reviews.constants import ReviewStatus
-    from reviews.models import Review
+    from apps.accounts.models import CourierProfile
+    from apps.reviews.constants import ReviewStatus
+    from apps.reviews.models import Review
 
     couriers = CourierProfile.objects.values_list("user_id", flat=True)
     updated = 0
@@ -69,7 +69,7 @@ def notify_merchant_new_review(review_id: str):
     Notifications app'i orqali.
     """
     try:
-        from reviews.models import Review
+        from apps.reviews.models import Review
 
         review = Review.objects.select_related("merchant", "order").get(id=review_id)
 

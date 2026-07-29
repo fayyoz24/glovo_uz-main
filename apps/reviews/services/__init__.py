@@ -147,7 +147,7 @@ class ReviewService:
     def flag_review(*, review: Review, user, reason: str, note: str = "") -> ReviewFlag:
         """Foydalanuvchi reviewni shikoyat qiladi."""
         if has_user_flagged(user.id, review.id):
-            from reviews.exceptions import ReviewError
+            from apps.reviews.exceptions import ReviewError
             raise ReviewError("Siz bu reviewni allaqachon shikoyat qilgansiz.", "already_flagged")
 
         flag = ReviewFlag.objects.create(
@@ -210,7 +210,7 @@ class ReviewService:
         Merchant modeli avg_rating maydoniga ega bo'lishi kerak.
         """
         from django.db.models import Avg
-        from merchants.models import Merchant  # lazy import
+        from apps.merchants.models import Merchant  # lazy import
 
         avg = (
             Review.objects.filter(
@@ -227,7 +227,7 @@ class ReviewService:
         CourierProfile.rating ni qayta hisoblaydi.
         """
         from django.db.models import Avg
-        from accounts.models import CourierProfile  # lazy import
+        from apps.accounts.models import CourierProfile  # lazy import
 
         avg = (
             Review.objects.filter(

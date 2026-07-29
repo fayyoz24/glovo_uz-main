@@ -36,3 +36,9 @@ class CheckoutError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "Checkout jarayonida xatolik yuz berdi."
     default_code = "checkout_error"
+
+
+class PhoneRequiredError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Buyurtma berish uchun avval telefon raqamingizni kiriting."
+    default_code = "phone_required"

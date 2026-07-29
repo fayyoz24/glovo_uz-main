@@ -25,5 +25,8 @@ def toggle_accepting_orders(branch_id, merchant, accepting: bool) -> MerchantBra
     if not branch:
         raise BranchNotFound()
     branch.accepting_orders = accepting
-    branch.save(update_fields=["accepting_orders"])
+    # Do'kon egasi buyurtma qabul qilishni to'xtatsa, filial statusi ham
+    # avtomatik "yopiq" holatiga o'tadi (va qayta yoqilganda ochiladi).
+    branch.is_open = accepting
+    branch.save(update_fields=["accepting_orders", "is_open"])
     return branch

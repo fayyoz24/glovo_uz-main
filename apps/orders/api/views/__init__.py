@@ -31,7 +31,6 @@ class CheckoutView(views.APIView):
 
     def post(self, request):
         serializer = CheckoutSerializer(data=request.data)
-        print("DEBUG request.user:", request.user.id, request.user.phone)
         serializer.is_valid(raise_exception=True)
         d = serializer.validated_data
 
@@ -40,13 +39,18 @@ class CheckoutView(views.APIView):
         except Address.DoesNotExist:
             return Response({"detail": "Manzil topilmadi."}, status=status.HTTP_400_BAD_REQUEST)
 
-        from apps.orders.exceptions import EmptyCartError, BranchClosedError, CheckoutError
+        from apps.orders.exceptions import EmptyCartError, BranchClosedError, CheckoutError, PhoneRequiredError
         try:
             order = checkout_from_cart(
                 user=request.user,
                 address=address,
                 payment_method=d["payment_method"],
                 tip_amount=d.get("tip_amount"),
+            )
+        except PhoneRequiredError as e:
+            return Response(
+                {"detail": str(e.detail), "code": "phone_required"},
+                status=e.status_code,
             )
         except (EmptyCartError, BranchClosedError, CheckoutError) as e:
             return Response({"detail": str(e.detail)}, status=e.status_code)

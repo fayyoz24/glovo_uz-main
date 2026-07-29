@@ -95,6 +95,45 @@ def assign_courier_to_order(order, attempt_number: int = None) -> CourierAssignm
     return assignment
 
 
+def dispatch_pending_orders() -> list:
+    """
+    Kuryer onlayn bo'lganda chaqiriladi: hozircha kuryer kutayotgan
+    (READY_FOR_PICKUP, hali aktiv taklifi yo'q) barcha buyurtmalarga
+    NAVBAT BO'YICHA (eng eskisidan boshlab) taklif yuborishga urinadi.
+
+    Har bir buyurtma uchun odatdagi assign_courier_to_order() chaqiriladi —
+    demak, har doimgidek ENG YAQIN bo'sh kuryerga taklif boradi (bu yangi
+    onlayn bo'lgan kuryer bo'lishi ham, bo'lmasligi ham mumkin).
+    """
+    from apps.orders.models import Order
+    from apps.orders.constants import OrderStatus
+    from apps.dispatch.selectors import get_active_assignment
+    from apps.dispatch.exceptions import NoCouriersAvailable, MaxAttemptsReached
+
+    waiting_orders = (
+        Order.objects.filter(status=OrderStatus.READY_FOR_PICKUP)
+        .select_related("branch")
+        .order_by("created_at")
+    )
+
+    dispatched = []
+    for order in waiting_orders:
+        if get_active_assignment(order):
+            continue  # bu buyurtma uchun allaqachon javob kutilayotgan taklif bor
+
+        try:
+            assignment = assign_courier_to_order(order)
+            dispatched.append(assignment)
+        except NoCouriersAvailable:
+            # Bu buyurtma uchun mos kuryer topilmadi — navbatdagi buyurtmaga o'tamiz
+            continue
+        except MaxAttemptsReached:
+            reassign_or_escalate(order)
+            continue
+
+    return dispatched
+
+
 def reassign_or_escalate(order) -> None:
     """
     Taklif muvaffaqiyatsiz bo'lganda (rad etish / 10s timeout) chaqiriladi.

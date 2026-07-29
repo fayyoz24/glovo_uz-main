@@ -26,23 +26,42 @@ class MerchantBranchSerializer(serializers.ModelSerializer):
 
 class MerchantListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views."""
+    is_closed = serializers.SerializerMethodField()
+
     class Meta:
         model = Merchant
-        fields = ["id", "name", "slug", "type", "logo", "cover", "rating_avg", "total_reviews", "status"]
+        fields = ["id", "name", "slug", "type", "logo", "cover", "rating_avg", "total_reviews", "status", "is_closed"]
         read_only_fields = ["id", "slug", "rating_avg", "total_reviews"]
+
+    def get_is_closed(self, obj):
+        # Do'kon "yopiq" hisoblanadi, agar hech bir filiali ochiq va
+        # buyurtma qabul qilmayotgan bo'lsa.
+        branches = getattr(obj, "_prefetched_branches", None)
+        if branches is None:
+            branches = obj.branches.all()
+        if not branches:
+            return False
+        return not any(b.is_open and b.accepting_orders for b in branches)
 
 
 class MerchantDetailSerializer(serializers.ModelSerializer):
     branches = MerchantBranchSerializer(many=True, read_only=True)
+    is_closed = serializers.SerializerMethodField()
 
     class Meta:
         model = Merchant
         fields = [
             "id", "name", "slug", "type", "description",
             "logo", "cover", "rating_avg", "total_reviews",
-            "status", "branches", "created_at", "updated_at",
+            "status", "is_closed", "branches", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "slug", "rating_avg", "total_reviews", "status", "created_at", "updated_at"]
+
+    def get_is_closed(self, obj):
+        branches = list(obj.branches.all())
+        if not branches:
+            return False
+        return not any(b.is_open and b.accepting_orders for b in branches)
 
 
 class MerchantCreateSerializer(serializers.ModelSerializer):

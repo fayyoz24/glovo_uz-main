@@ -11,8 +11,8 @@ def expire_stale_promos(self):
     Muddati o'tgan promo kampaniyalarni EXPIRED holatiga o'tkazadi.
     Celery Beat orqali har kuni ishga tushiriladi.
     """
-    from promotions.constants import PromoStatus
-    from promotions.models import PromoCampaign
+    from apps.promotions.constants import PromoStatus
+    from apps.promotions.models import PromoCampaign
 
     now = timezone.now()
     expired_count = PromoCampaign.objects.filter(
@@ -59,8 +59,8 @@ def auto_activate_scheduled_promos():
     starts_at vaqti kelgan DRAFT kampaniyalarni ACTIVE qiladi.
     Celery Beat: har 5 daqiqada.
     """
-    from promotions.constants import PromoStatus
-    from promotions.models import PromoCampaign
+    from apps.promotions.constants import PromoStatus
+    from apps.promotions.models import PromoCampaign
 
     now = timezone.now()
     count = PromoCampaign.objects.filter(

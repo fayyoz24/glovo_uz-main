@@ -58,6 +58,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     courier_phone = serializers.CharField(source="courier.phone", read_only=True, allow_null=True)
     courier_lat = serializers.SerializerMethodField()
     courier_lng = serializers.SerializerMethodField()
+    has_review = serializers.SerializerMethodField()
 
     def get_courier_lat(self, obj):
         profile = getattr(obj.courier, "courier_profile", None) if obj.courier_id else None
@@ -66,6 +67,13 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     def get_courier_lng(self, obj):
         profile = getattr(obj.courier, "courier_profile", None) if obj.courier_id else None
         return profile.current_lng if profile else None
+
+    def get_has_review(self, obj):
+        # Mijoz bu buyurtma uchun review qoldirganmi — qoldirgan bo'lsa
+        # frontendda "Buyurtmani baholash" tugmasi ko'rsatilmaydi.
+        # (OneToOne teskari bog'lanish yo'q bo'lsa, Django buni AttributeError
+        # sifatida ko'taradi — shuning uchun hasattr() ishlatiladi.)
+        return hasattr(obj, "review")
 
     class Meta:
         model = Order
@@ -77,7 +85,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "placed_at", "confirmed_at", "picked_up_at", "delivered_at",
             "cancel_reason", "cancel_note",
             "courier_id", "courier_name", "courier_phone", "courier_lat", "courier_lng",
-            "items", "status_history",
+            "items", "status_history", "has_review",
         ]
 
 

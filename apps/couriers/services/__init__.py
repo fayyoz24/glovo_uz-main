@@ -28,6 +28,22 @@ def go_online(*, user) -> CourierProfile:
     profile.save(update_fields=["courier_status", "updated_at"])
 
     CourierShift.objects.create(courier=user, status=ShiftStatus.ACTIVE)
+
+    # Kuryer onlayn bo'lgach, kuryer kutayotgan buyurtmalarni navbat
+    # bo'yicha taklif qilishga darhol urinib ko'ramiz (5 daqiqalik retry
+    # taymerini kutmasdan).
+    try:
+        from apps.dispatch.tasks import dispatch_waiting_orders
+        dispatch_waiting_orders.delay()
+    except ImportError:
+        try:
+            from apps.dispatch.services import dispatch_pending_orders
+            dispatch_pending_orders()
+        except Exception:
+            pass
+    except Exception:
+        pass
+
     return profile
 
 

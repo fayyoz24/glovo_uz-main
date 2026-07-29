@@ -36,12 +36,12 @@ class ReviewAdmin(admin.ModelAdmin):
     actions = ["hide_selected", "restore_selected"]
 
     def hide_selected(self, request, queryset):
-        from reviews.constants import ReviewStatus
+        from apps.reviews.constants import ReviewStatus
         queryset.update(status=ReviewStatus.HIDDEN)
     hide_selected.short_description = "Tanlangan reviewlarni yashirish"
 
     def restore_selected(self, request, queryset):
-        from reviews.constants import ReviewStatus
+        from apps.reviews.constants import ReviewStatus
         queryset.update(status=ReviewStatus.VISIBLE, flag_count=0)
     restore_selected.short_description = "Tanlangan reviewlarni tiklash"
 

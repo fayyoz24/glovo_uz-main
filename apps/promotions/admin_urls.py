@@ -1,6 +1,6 @@
 from django.urls import path
 
-from promotions.api.views import (
+from apps.promotions.api.views import (
     AdminPromoActivateView,
     AdminPromoCampaignDetailView,
     AdminPromoCampaignListCreateView,

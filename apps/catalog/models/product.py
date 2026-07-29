@@ -84,6 +84,12 @@ class Product(models.Model):
         ]
         ordering = ["sort_order", "name_ru"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Diskdagi/DB'dagi joriy rasm nomini eslab qolamiz — save() ichida
+        # rasm haqiqatan almashtirilganini aniqlash uchun (pastga qarang).
+        self._original_image_name = self.image.name if self.image else None
+
     def __str__(self):
         return self.name_ru
 
@@ -128,7 +134,22 @@ class Product(models.Model):
         self.save(update_fields=update_fields)
 
     def save(self, *args, **kwargs):
-        if self.image:
+        # Rasmni faqat u haqiqatan yangi yuklangan/almashtirilgan bo'lsagina
+        # qayta ishlaymiz (siqish, RGB'ga o'tkazish va h.k.).
+        #
+        # Sababi: reduce_stock() kabi joylar
+        # save(update_fields=["stock_qty", "updated_at"]) chaqiradi — bunda
+        # `image` maydoni umuman o'zgarmagan, lekin oldingi kodda save()
+        # baribir storage'dan (S3/disk) rasmni qayta ochib, qayta yozar edi.
+        # Bu har bir checkout'da keraksiz storage so'roviga olib kelardi va,
+        # S3 vaqtincha ishlamasa yoki noto'g'ri sozlangan bo'lsa, rasmga
+        # umuman aloqasi yo'q amallarni (masalan, buyurtma berish) ham
+        # ishdan chiqarardi.
+        update_fields = kwargs.get("update_fields")
+        image_targeted = update_fields is None or "image" in update_fields
+        image_changed = self.image and self.image.name != self._original_image_name
+
+        if image_targeted and image_changed:
             img = Image.open(self.image)
 
             # PNG kabi RGBA rasmlarni RGB ga o'tkazish
@@ -158,6 +179,7 @@ class Product(models.Model):
             )
 
         super().save(*args, **kwargs)
+        self._original_image_name = self.image.name if self.image else None
 
 
 class ProductImage(models.Model):
