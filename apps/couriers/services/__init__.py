@@ -138,11 +138,36 @@ def set_courier_busy(*, courier_user):
     )
 
 
+# def set_courier_available(*, courier_user):
+#     CourierProfile.objects.filter(
+#         user=courier_user,
+#         courier_status=CourierStatus.BUSY,
+#     ).update(
+#         courier_status=CourierStatus.ONLINE,
+#         updated_at=timezone.now(),
+#     )
+
 def set_courier_available(*, courier_user):
-    CourierProfile.objects.filter(
+    updated = CourierProfile.objects.filter(
         user=courier_user,
         courier_status=CourierStatus.BUSY,
     ).update(
         courier_status=CourierStatus.ONLINE,
         updated_at=timezone.now(),
     )
+
+    # Kuryer yetkazib berib bo'sh bo'lgach ham (xuddi go_online() dagi kabi),
+    # kutayotgan buyurtmalarni navbat bo'yicha darhol taklif qilishga urinamiz —
+    # 5 daqiqalik retry taymerini kutmasdan.
+    if updated:
+        try:
+            from apps.dispatch.tasks import dispatch_waiting_orders
+            dispatch_waiting_orders.delay()
+        except ImportError:
+            try:
+                from apps.dispatch.services import dispatch_pending_orders
+                dispatch_pending_orders()
+            except Exception:
+                pass
+        except Exception:
+            pass
