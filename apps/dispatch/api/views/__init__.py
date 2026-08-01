@@ -102,6 +102,14 @@ class CourierDeliveredView(views.APIView):
                 {"detail": f"Buyurtma holati '{order.status}', yetkazib bo'lmaydi."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        from apps.orders.constants import PaymentMethod
+        if order.payment_method == PaymentMethod.CASH and not request.data.get("cash_confirmed"):
+            return Response(
+                {"detail": "Naqd pul olinganini tasdiqlash kerak (cash_confirmed=true)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         order = courier_delivered(courier_user=request.user, order=order)
         return Response({"status": "delivered", "order_id": str(order.id)})
 

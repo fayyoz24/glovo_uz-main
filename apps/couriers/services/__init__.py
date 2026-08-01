@@ -138,15 +138,6 @@ def set_courier_busy(*, courier_user):
     )
 
 
-# def set_courier_available(*, courier_user):
-#     CourierProfile.objects.filter(
-#         user=courier_user,
-#         courier_status=CourierStatus.BUSY,
-#     ).update(
-#         courier_status=CourierStatus.ONLINE,
-#         updated_at=timezone.now(),
-#     )
-
 def set_courier_available(*, courier_user):
     updated = CourierProfile.objects.filter(
         user=courier_user,
@@ -157,8 +148,10 @@ def set_courier_available(*, courier_user):
     )
 
     # Kuryer yetkazib berib bo'sh bo'lgach ham (xuddi go_online() dagi kabi),
-    # kutayotgan buyurtmalarni navbat bo'yicha darhol taklif qilishga urinamiz —
-    # 5 daqiqalik retry taymerini kutmasdan.
+    # kuryer kutayotgan buyurtmalarni navbat bo'yicha darhol taklif qilishga
+    # urinamiz — 5 daqiqalik retry taymerini kutmasdan. Aks holda, allaqachon
+    # tayyor turgan orderlar navbatdagi bo'sh kuryer paydo bo'lguncha "osilib"
+    # qoladi.
     if updated:
         try:
             from apps.dispatch.tasks import dispatch_waiting_orders

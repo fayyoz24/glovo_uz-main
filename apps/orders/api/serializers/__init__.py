@@ -59,6 +59,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     courier_lat = serializers.SerializerMethodField()
     courier_lng = serializers.SerializerMethodField()
     has_review = serializers.SerializerMethodField()
+    cancel_reason_display = serializers.CharField(source="get_cancel_reason_display", read_only=True)
 
     def get_courier_lat(self, obj):
         profile = getattr(obj.courier, "courier_profile", None) if obj.courier_id else None
@@ -83,7 +84,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "address_snapshot", "subtotal", "delivery_fee", "service_fee",
             "discount_amount", "tip_amount", "total_amount", "currency",
             "placed_at", "confirmed_at", "picked_up_at", "delivered_at",
-            "cancel_reason", "cancel_note",
+            "cancel_reason", "cancel_reason_display", "cancel_note",
             "courier_id", "courier_name", "courier_phone", "courier_lat", "courier_lng",
             "items", "status_history", "has_review",
         ]
