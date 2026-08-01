@@ -11,11 +11,11 @@ class CourierProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id", "full_name", "phone", "vehicle_type", "vehicle_number",
             "courier_status", "is_approved", "rating", "total_deliveries",
-            "balance", "current_lat", "current_lng", "last_location_at",
+            "balance", "total_cash_collected", "current_lat", "current_lng", "last_location_at",
         ]
         read_only_fields = [
             "courier_status", "is_approved", "rating",
-            "total_deliveries", "balance", "current_lat",
+            "total_deliveries", "balance", "total_cash_collected", "current_lat",
             "current_lng", "last_location_at",
         ]
 
@@ -55,7 +55,7 @@ class CourierEarningSerializer(serializers.ModelSerializer):
         model = CourierEarning
         fields = [
             "id", "order_public_id", "amount", "base_fee",
-            "bonus", "tip", "note", "created_at",
+            "bonus", "tip", "cash_collected", "note", "created_at",
         ]
 
 
@@ -64,5 +64,7 @@ class EarningsSummarySerializer(serializers.Serializer):
     base_fee = serializers.DecimalField(max_digits=14, decimal_places=2)
     bonus = serializers.DecimalField(max_digits=14, decimal_places=2)
     tips = serializers.DecimalField(max_digits=14, decimal_places=2)
+    cash_collected = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_cash_collected = serializers.DecimalField(max_digits=14, decimal_places=2)
     deliveries = serializers.IntegerField()
     period_days = serializers.IntegerField()

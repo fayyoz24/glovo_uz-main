@@ -61,8 +61,10 @@ def courier_delivered(*, courier_user, order):
 def _create_earning_for_delivery(courier_user, order):
     """Yetkazish uchun daromad hisoblaydi va yozadi."""
     from decimal import Decimal
+    from apps.orders.constants import PaymentMethod
     base_fee = order.delivery_fee * Decimal("0.8")  # 80% kuryerga
     tip = order.tip_amount
+    cash_collected = order.total_amount if order.payment_method == PaymentMethod.CASH else Decimal("0")
     try:
         record_delivery_earning(
             courier_user=courier_user,
@@ -70,6 +72,7 @@ def _create_earning_for_delivery(courier_user, order):
             base_fee=base_fee,
             bonus=Decimal("0"),
             tip=tip,
+            cash_collected=cash_collected,
         )
     except Exception as e:
         print(f"[DISPATCH] Earning error: {e}")

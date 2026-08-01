@@ -100,10 +100,12 @@ def record_delivery_earning(
     base_fee,
     bonus=0,
     tip=0,
+    cash_collected=0,
     note: str = "",
 ) -> CourierEarning:
     from decimal import Decimal
     amount = Decimal(str(base_fee)) + Decimal(str(bonus)) + Decimal(str(tip))
+    cash_collected = Decimal(str(cash_collected))
     earning = CourierEarning.objects.create(
         courier=courier_user,
         order=order,
@@ -111,13 +113,18 @@ def record_delivery_earning(
         base_fee=base_fee,
         bonus=bonus,
         tip=tip,
+        cash_collected=cash_collected,
         note=note,
     )
-    # Profile balansini yangilash
-    CourierProfile.objects.filter(user=courier_user).update(
-        balance=models_balance_f(amount),
-        total_deliveries=models_count_f(),
-    )
+    # Profile balansi va yig'ilgan naqd pul hisobini yangilash
+    update_fields = {
+        "balance": models_balance_f(amount),
+        "total_deliveries": models_count_f(),
+    }
+    if cash_collected:
+        from django.db.models import F
+        update_fields["total_cash_collected"] = F("total_cash_collected") + cash_collected
+    CourierProfile.objects.filter(user=courier_user).update(**update_fields)
     return earning
 
 

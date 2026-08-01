@@ -29,12 +29,16 @@ def get_courier_earnings_summary(courier_user, days: int = 30) -> dict:
         base=Sum("base_fee"),
         bonus=Sum("bonus"),
         tips=Sum("tip"),
+        cash=Sum("cash_collected"),
     )
+    profile = CourierProfile.objects.filter(user=courier_user).only("total_cash_collected").first()
     return {
         "total": agg["total"] or 0,
         "base_fee": agg["base"] or 0,
         "bonus": agg["bonus"] or 0,
         "tips": agg["tips"] or 0,
+        "cash_collected": agg["cash"] or 0,
+        "total_cash_collected": profile.total_cash_collected if profile else 0,
         "deliveries": qs.count(),
         "period_days": days,
     }
