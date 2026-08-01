@@ -83,8 +83,11 @@ class CartItem(models.Model):
         on_delete=models.SET_NULL,
         related_name="+",
     )
-    qty = models.PositiveSmallIntegerField(default=1)
-    unit_price = models.PositiveIntegerField(help_text="Price at time of adding to cart, in tiyin")
+    # Dona mahsulotlar uchun butun son (1, 2, 3...), kg bilan sotiladigan
+    # mahsulotlar uchun kasrli qiymat (0.5, 1.2 va h.k.) bo'lishi mumkin —
+    # shuning uchun Decimal, avvalgi PositiveSmallIntegerField emas.
+    qty = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    unit_price = models.PositiveIntegerField(help_text="Price at time of adding to cart, in tiyin (per unit — dona yoki kg)")
     line_total = models.PositiveIntegerField()
     snapshot_name = models.CharField(max_length=200, blank=True, help_text="Product name snapshot")
     instructions = models.TextField(blank=True, help_text="Special instructions from customer")
@@ -101,7 +104,9 @@ class CartItem(models.Model):
         # Auto-snapshot product name and calculate line_total
         if not self.snapshot_name:
             self.snapshot_name = self.product.name_ru
-        self.line_total = self.unit_price * self.qty
+        # qty endi kasrli (kg) bo'lishi mumkin — line_total esa butun tiyin
+        # bo'lishi kerak (PositiveIntegerField), shu sabab yaxlitlaymiz.
+        self.line_total = int((self.unit_price * self.qty).to_integral_value(rounding="ROUND_HALF_UP"))
         super().save(*args, **kwargs)
 
 

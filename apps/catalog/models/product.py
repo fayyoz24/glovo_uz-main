@@ -1,7 +1,8 @@
 import uuid
+from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from apps.catalog.constants import ProductStatus
+from apps.catalog.constants import ProductStatus, UnitType
 from apps.catalog.validators import validate_product_image_size
 from PIL import Image
 from io import BytesIO
@@ -40,6 +41,16 @@ class Product(models.Model):
     base_price = models.PositiveIntegerField(help_text="Price in UZS tiyin (1 UZS = 100 tiyin)")
     sku = models.CharField(max_length=100, blank=True)
 
+    # Mahsulot qanday o'lchovda sotilishi — do'kon egasi belgilaydi (dona yoki kg).
+    # base_price har doim shu o'lchov birligi uchun narx: dona bo'lsa — 1 dona narxi,
+    # kg bo'lsa — 1 kg narxi.
+    unit_type = models.CharField(
+        max_length=10,
+        choices=UnitType.CHOICES,
+        default=UnitType.PIECE,
+        help_text="Mahsulot dona (piece) yoki kilogramm (kg) da sotilishini bildiradi",
+    )
+
     # Mahsulot rasmi — do'kon egasi maksimal 1 ta rasm yuklay oladi.
     image = models.ImageField(
         upload_to=product_image_upload_path,
@@ -66,7 +77,7 @@ class Product(models.Model):
 
     status = models.CharField(
         max_length=20,
-        choices=ProductStatus.choices,
+        choices=ProductStatus.CHOICES,
         default=ProductStatus.ACTIVE,
     )
     is_active = models.BooleanField(default=True)
@@ -96,9 +107,33 @@ class Product(models.Model):
     def get_name(self, lang: str = "ru") -> str:
         return getattr(self, f"name_{lang}", self.name_ru) or self.name_ru
 
+    # Kg bo'yicha sotiladigan mahsulotlar uchun: agar 1 kg narxi shu chegaradan
+    # qimmat bo'lsa, mijoz nozikroq qadam (0.1 kg) bilan qo'sha oladi, aks holda
+    # 0.5 kg qadam yetarli. Narx tiyin'da: 100 000 so'm = 10 000 000 tiyin.
+    KG_FINE_STEP_PRICE_THRESHOLD = 10_000_000
+
     @property
     def is_orderable(self) -> bool:
         return self.is_active and self.is_available and self.status == ProductStatus.ACTIVE
+
+    @property
+    def qty_step(self) -> Decimal:
+        """Savatga qo'shish/o'zgartirishda ruxsat etilgan minimal miqdor qadami."""
+        if self.unit_type != UnitType.KG:
+            return Decimal("1")
+        if self.base_price > self.KG_FINE_STEP_PRICE_THRESHOLD:
+            return Decimal("0.1")
+        return Decimal("0.5")
+
+    @property
+    def qty_increments(self) -> list:
+        """Frontendda ko'rsatiladigan tugmalar uchun taklif etilgan qadamlar ro'yxati
+        (kattadan kichikka), masalan [1, 0.5, 0.1] yoki dona uchun [1]."""
+        if self.unit_type != UnitType.KG:
+            return [1]
+        if self.base_price > self.KG_FINE_STEP_PRICE_THRESHOLD:
+            return [1, 0.5, 0.1]
+        return [1, 0.5]
 
     @property
     def has_discount(self) -> bool:
@@ -112,13 +147,18 @@ class Product(models.Model):
         discount = (self.base_price * self.discount_percent) // 100
         return max(self.base_price - discount, 0)
 
-    def reduce_stock(self, qty: int = 1) -> None:
+    def reduce_stock(self, qty) -> None:
         """
         Xarid qilinganda ombordagi sonni kamaytiradi (race-condition'dan himoyalangan holda).
         Agar stock_qty 0 yoki undan kam bo'lib qolsa, mahsulot avtomatik 'tugagan'
         (OUT_OF_STOCK) statusiga o'tadi va is_available=False bo'ladi.
         `select_for_update()` bilan olingan instansiyada chaqirilishi tavsiya etiladi.
+
+        `qty` kg mahsulotlar uchun kasrli (Decimal) bo'lishi mumkin — stock_qty esa
+        butun son sifatida saqlanadi, shu sabab eng yaqin butun songacha yaxlitlanadi
+        (masalan 1.5 kg sotilsa ombordan 2 birlik ayiriladi, kam qolib ketmasligi uchun).
         """
+        qty = int(Decimal(qty).to_integral_value(rounding="ROUND_CEILING"))
         if not self.track_stock or qty <= 0:
             return
 

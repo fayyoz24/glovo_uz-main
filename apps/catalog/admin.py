@@ -36,10 +36,10 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = [
-        "name_ru", "merchant", "base_price", "discount_percent",
+        "name_ru", "merchant", "unit_type", "base_price", "discount_percent",
         "stock_qty", "status", "is_available", "created_at",
     ]
-    list_filter = ["status", "is_active", "is_available", "track_stock"]
+    list_filter = ["status", "is_active", "is_available", "track_stock", "unit_type"]
     search_fields = ["name_ru", "name_uz", "sku"]
     inlines = [ProductVariantInline, ModifierGroupInline]
 

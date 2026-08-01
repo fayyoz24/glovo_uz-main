@@ -17,8 +17,8 @@ class ProductModifierGroup(models.Model):
     name_ru = models.CharField(max_length=150)
     group_type = models.CharField(
         max_length=10,
-        choices=ModifierGroupType.choices,
-        default=ModifierGroupType.MULTIPLE,
+        choices=ModifierGroupType.CHOICES,
+        default=ModifierGroupType.MULTI,
     )
     min_select = models.PositiveSmallIntegerField(default=0)
     max_select = models.PositiveSmallIntegerField(default=1)

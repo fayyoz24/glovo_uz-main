@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 from apps.carts.models import Cart, CartItem, CartItemModifier
 
@@ -14,12 +16,16 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name_uz", read_only=True)
     product_image = serializers.SerializerMethodField()
     modifiers = CartItemModifierSerializer(many=True, read_only=True)
+    unit_type = serializers.CharField(source="product.unit_type", read_only=True)
+    qty_step = serializers.DecimalField(source="product.qty_step", max_digits=8, decimal_places=2, read_only=True)
+    qty_increments = serializers.ListField(source="product.qty_increments", read_only=True)
 
     class Meta:
         model = CartItem
         fields = [
             "id", "product", "product_name", "product_image",
             "variant", "qty", "unit_price", "line_total",
+            "unit_type", "qty_step", "qty_increments",
             "modifiers", "instructions",
         ]
 
@@ -52,7 +58,11 @@ class CartSerializer(serializers.ModelSerializer):
 class AddToCartSerializer(serializers.Serializer):
     product_id = serializers.UUIDField()
     variant_id = serializers.UUIDField(required=False, allow_null=True)
-    qty = serializers.IntegerField(min_value=1, default=1)
+    # DecimalField — dona mahsulotlar uchun butun (1, 2...), kg bilan
+    # sotiladigan mahsulotlar uchun kasrli (0.1, 0.5...) qiymat qabul qilinadi.
+    # Aniq qadam (0.1 yoki 0.5 ga karralilik) product.qty_step orqali servis
+    # qatlamida tekshiriladi.
+    qty = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal("0.1"), default=Decimal("1"))
     modifier_option_ids = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list
     )
@@ -64,7 +74,7 @@ class AddToCartSerializer(serializers.Serializer):
 
 
 class UpdateCartItemSerializer(serializers.Serializer):
-    qty = serializers.IntegerField(min_value=0)
+    qty = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal("0"))
 
 
 class ApplyPromoSerializer(serializers.Serializer):

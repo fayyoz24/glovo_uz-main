@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -19,6 +21,17 @@ from apps.catalog.exceptions import ProductNotAvailable, InvalidVariant
 from apps.catalog.services import validate_modifier_selection
 
 
+def _validate_qty_for_product(product, qty: Decimal) -> None:
+    """Mahsulot o'lchov birligiga mos miqdor qadamini tekshiradi:
+    dona mahsulot uchun faqat butun son, kg mahsulot uchun product.qty_step
+    (0.1 yoki 0.5 kg) ga karrali qiymat bo'lishi kerak."""
+    step = product.qty_step
+    if qty <= 0 or (qty % step) != 0:
+        raise InvalidQuantity(
+            detail=f"Miqdor {step} ga karrali bo'lishi kerak."
+        )
+
+
 def get_or_create_active_cart(user, branch_id=None) -> Cart:
     """Get existing active cart or create a new one."""
     cart = get_active_cart(user)
@@ -35,17 +48,20 @@ def get_or_create_active_cart(user, branch_id=None) -> Cart:
 def add_item_to_cart(
     user,
     product_id,
-    qty: int,
+    qty: Decimal,
     variant_id=None,
     modifier_option_ids: list = None,
     instructions: str = "",
 ) -> CartItem:
-    if qty < 1 or qty > MAX_CART_ITEM_QTY:
+    qty = Decimal(qty)
+    if qty > MAX_CART_ITEM_QTY:
         raise InvalidQuantity()
 
     product = Product.objects.filter(id=product_id).select_related("merchant").first()
     if not product or not product.is_orderable:
         raise ProductNotAvailable()
+
+    _validate_qty_for_product(product, qty)
 
     # Resolve branch from product
     branch = product.branch or product.merchant.branches.filter(
@@ -89,7 +105,7 @@ def add_item_to_cart(
         if existing and not modifier_option_ids:
             new_qty = existing.qty + qty
             if new_qty > MAX_CART_ITEM_QTY:
-                raise InvalidQuantity(detail=f"Maximum {MAX_CART_ITEM_QTY} ta mahsulot qo'shish mumkin.")
+                raise InvalidQuantity(detail=f"Maximum {MAX_CART_ITEM_QTY} ta/kg mahsulot qo'shish mumkin.")
             existing.qty = new_qty
             existing.unit_price = unit_price
             existing.save()
@@ -118,15 +134,18 @@ def add_item_to_cart(
     return cart_item
 
 
-def update_cart_item(user, item_id, qty: int) -> CartItem:
-    if qty < 1 or qty > MAX_CART_ITEM_QTY:
+def update_cart_item(user, item_id, qty: Decimal) -> CartItem:
+    qty = Decimal(qty)
+    if qty > MAX_CART_ITEM_QTY:
         raise InvalidQuantity()
     cart = get_active_cart(user)
     if not cart:
         raise CartNotFound()
-    item = CartItem.objects.filter(id=item_id, cart=cart).first()
+    item = CartItem.objects.filter(id=item_id, cart=cart).select_related("product").first()
     if not item:
         raise CartItemNotFound()
+
+    _validate_qty_for_product(item.product, qty)
 
     with transaction.atomic():
         item.qty = qty

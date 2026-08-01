@@ -12,7 +12,9 @@ class OrderItem(models.Model):
     product_id = models.UUIDField()
     product_name_snapshot = models.CharField(max_length=255)
     variant_snapshot = models.CharField(max_length=128, blank=True)
-    qty = models.PositiveIntegerField()
+    # Savatdan buyurtmaga o'tganda kg mahsulotlar kasrli miqdor bilan
+    # kelishi mumkin (masalan 1.50 kg), shuning uchun Decimal.
+    qty = models.DecimalField(max_digits=8, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     line_total = models.DecimalField(max_digits=14, decimal_places=2)
     instructions = models.CharField(max_length=512, blank=True)

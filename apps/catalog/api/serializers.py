@@ -93,6 +93,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     discounted_price = serializers.IntegerField(read_only=True)
     has_discount = serializers.BooleanField(read_only=True)
     in_stock = serializers.SerializerMethodField()
+    qty_step = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)
+    qty_increments = serializers.ListField(read_only=True)
 
     class Meta:
         model = Product
@@ -108,6 +110,9 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_available",
             "in_stock",
             "category_name",
+            "unit_type",
+            "qty_step",
+            "qty_increments",
             "sort_order",
         )
 
@@ -124,6 +129,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     discounted_price = serializers.IntegerField(read_only=True)
     has_discount = serializers.BooleanField(read_only=True)
     in_stock = serializers.SerializerMethodField()
+    qty_step = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)
+    qty_increments = serializers.ListField(read_only=True)
 
     class Meta:
         model = Product
@@ -149,6 +156,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "stock_qty",
             "track_stock",
             "in_stock",
+            "unit_type",
+            "qty_step",
+            "qty_increments",
             "variants",
             "modifier_groups",
             "sort_order",
@@ -175,6 +185,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "description_uz",
             "description_ru",
             "base_price",
+            "unit_type",
             "sku",
             "image",
             "discount_percent",
@@ -192,6 +203,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "discount_percent": {"required": False},
             "track_stock": {"required": False},
             "stock_qty": {"required": False},
+            "unit_type": {"required": False},
         }
 
     def validate_discount_percent(self, value):
@@ -218,6 +230,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "discount_percent",
             "track_stock",
             "stock_qty",
+            "unit_type",
             "is_active",
             "is_available",
             "sort_order",
