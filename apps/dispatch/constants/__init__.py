@@ -12,7 +12,7 @@ class AssignmentStatus(models.TextChoices):
 
 # Kuryer taklifni qabul qilishi (yoki rad etishi) uchun berilgan vaqt (soniya).
 # Uber/Bolt/Glovo kabi — kuryerga qisqa "ring" vaqti beriladi.
-OFFER_TIMEOUT_SECONDS = 30
+OFFER_TIMEOUT_SECONDS = 10
 
 # Kuryer 10 soniya ichida javob bermasa yoki rad etsa, buyurtma "pending"
 # (kuryer kutilmoqda) holatiga o'tadi va shuncha soniyadan keyin navbatdagi
