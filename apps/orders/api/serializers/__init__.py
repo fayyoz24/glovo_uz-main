@@ -51,6 +51,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
     merchant_name = serializers.CharField(source="merchant.name", read_only=True)
     branch_name = serializers.CharField(source="branch.name", read_only=True)
+    branch_address = serializers.CharField(source="branch.address_text", read_only=True)
     branch_lat = serializers.DecimalField(source="branch.latitude", max_digits=9, decimal_places=6, read_only=True)
     branch_lng = serializers.DecimalField(source="branch.longitude", max_digits=9, decimal_places=6, read_only=True)
 
@@ -80,7 +81,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "id", "public_id", "merchant_name", "branch_name", "branch_lat", "branch_lng",
+            "id", "public_id", "merchant_name", "branch_name", "branch_address", "branch_lat", "branch_lng",
             "status", "payment_method", "payment_status",
             "address_snapshot", "subtotal", "delivery_fee", "service_fee",
             "discount_amount", "tip_amount", "total_amount", "currency",
