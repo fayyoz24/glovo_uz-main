@@ -93,4 +93,4 @@ class Order(models.Model):
     def _generate_public_id() -> str:
         import random
         import string
-        return "GL" + "".join(random.choices(string.digits, k=8))
+        return "DS" + "".join(random.choices(string.digits, k=8))
