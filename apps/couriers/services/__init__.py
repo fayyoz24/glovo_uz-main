@@ -125,6 +125,19 @@ def record_delivery_earning(
         from django.db.models import F
         update_fields["total_cash_collected"] = F("total_cash_collected") + cash_collected
     CourierProfile.objects.filter(user=courier_user).update(**update_fields)
+
+    # Joriy (aktiv) smenaning statistikasini ham yangilash — avval bu yerda
+    # unutilgan edi, shu sabab kuryer ilovasidagi "shu smenada yig'ilgan
+    # naqt pul" har doim 0 bo'lib ko'rinardi.
+    from django.db.models import F
+    shift_update = {
+        "deliveries_count": F("deliveries_count") + 1,
+        "total_earned": F("total_earned") + amount,
+    }
+    if cash_collected:
+        shift_update["cash_collected"] = F("cash_collected") + cash_collected
+    CourierShift.objects.filter(courier=courier_user, status=ShiftStatus.ACTIVE).update(**shift_update)
+
     return earning
 
 

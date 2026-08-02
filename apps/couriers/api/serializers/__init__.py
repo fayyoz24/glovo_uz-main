@@ -44,7 +44,7 @@ class CourierShiftSerializer(serializers.ModelSerializer):
         model = CourierShift
         fields = [
             "id", "start_time", "end_time", "status",
-            "deliveries_count", "total_earned", "duration_minutes",
+            "deliveries_count", "total_earned", "cash_collected", "duration_minutes",
         ]
 
 

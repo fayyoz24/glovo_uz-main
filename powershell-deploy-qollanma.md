@@ -76,6 +76,7 @@ Shundan so'ng brauzerda yoki mobil ilovada yangi funksiyalarni real sinab ko'rin
 ## Qisqa versiya (hammasi bitta joyda)
 
 ```bash
+ssh -i "$env:USERPROFILE\Downloads\ssh-key-2026-07-27.key" ubuntu@130.61.137.94
 cd ~/glovo_uz-main
 git status
 git pull origin main

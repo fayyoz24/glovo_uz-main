@@ -20,6 +20,7 @@ class CourierShift(models.Model):
     # Smena davomida amalga oshirilgan yetkazib berishlar
     deliveries_count = models.PositiveIntegerField(default=0)
     total_earned = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    cash_collected = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
     class Meta:
         db_table = "courier_shift"

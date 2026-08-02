@@ -109,8 +109,10 @@ class Product(models.Model):
 
     # Kg bo'yicha sotiladigan mahsulotlar uchun: agar 1 kg narxi shu chegaradan
     # qimmat bo'lsa, mijoz nozikroq qadam (0.1 kg) bilan qo'sha oladi, aks holda
-    # 0.5 kg qadam yetarli. Narx tiyin'da: 100 000 so'm = 10 000 000 tiyin.
-    KG_FINE_STEP_PRICE_THRESHOLD = 10_000_000
+    # 0.5 kg qadam yetarli. base_price butun tizimda so'mda saqlanadi/ishlatiladi
+    # (merchant panel narxni to'g'ridan-to'g'ri so'mda yuboradi, ×100 konvertatsiya
+    # hech qayerda yo'q) — shu sabab chegara ham so'mda: 100 000 so'm.
+    KG_FINE_STEP_PRICE_THRESHOLD = 100_000
 
     @property
     def is_orderable(self) -> bool:

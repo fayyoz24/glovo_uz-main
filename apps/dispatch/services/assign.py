@@ -125,7 +125,12 @@ def dispatch_pending_orders() -> list:
             assignment = assign_courier_to_order(order)
             dispatched.append(assignment)
         except NoCouriersAvailable:
-            # Bu buyurtma uchun mos kuryer topilmadi — navbatdagi buyurtmaga o'tamiz
+            # Bu buyurtma uchun hozir mos kuryer topilmadi (masalan, yangi
+            # onlayn bo'lgan kuryer hali GPS ping yubormagan bo'lishi mumkin).
+            # Avval bu yerda hech qanday retry rejalashtirilmasdi va order
+            # abadiy "osilib" qolardi — endi PENDING_RETRY_SECONDS dan keyin
+            # qayta urinish rejalashtiriladi, xuddi reject/timeout holatidagi kabi.
+            reassign_or_escalate(order)
             continue
         except MaxAttemptsReached:
             reassign_or_escalate(order)
