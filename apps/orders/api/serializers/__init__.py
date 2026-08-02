@@ -32,13 +32,14 @@ class OrderListSerializer(serializers.ModelSerializer):
     merchant_name = serializers.CharField(source="merchant.name", read_only=True)
     branch_name = serializers.CharField(source="branch.name", read_only=True)
     item_count = serializers.SerializerMethodField()
+    items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
         fields = [
             "id", "public_id", "merchant_name", "branch_name",
             "status", "payment_method", "payment_status",
-            "total_amount", "currency", "placed_at", "item_count",
+            "total_amount", "currency", "placed_at", "item_count", "items",
         ]
 
     def get_item_count(self, obj):

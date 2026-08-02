@@ -124,6 +124,7 @@ class CourierAssignmentHistoryView(generics.ListAPIView):
         return (
             CourierAssignment.objects
             .filter(courier=self.request.user)
-            .select_related("order__merchant")
+            .select_related("order__merchant", "order__branch")
+            .prefetch_related("order__items")
             .order_by("-assigned_at")[:50]
         )

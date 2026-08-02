@@ -35,7 +35,7 @@ def get_branch_orders(branch, status: str = None) -> QuerySet:
     qs = (
         Order.objects.filter(branch=branch)
         .select_related("customer", "courier")
-        .prefetch_related("items")
+        .prefetch_related("items__modifiers")
     )
     if status:
         qs = qs.filter(status=status)

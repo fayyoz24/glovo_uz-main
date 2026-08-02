@@ -47,11 +47,26 @@ class AssignmentActionSerializer(serializers.Serializer):
 class CourierAssignmentListSerializer(serializers.ModelSerializer):
     order_public_id = serializers.CharField(source="order.public_id", read_only=True)
     merchant_name = serializers.CharField(source="order.merchant.name", read_only=True)
+    branch_name = serializers.CharField(source="order.branch.name", read_only=True)
+    delivery_address = serializers.SerializerMethodField()
+    total_amount = serializers.DecimalField(
+        source="order.total_amount", max_digits=14, decimal_places=2, read_only=True
+    )
+    payment_method = serializers.CharField(source="order.payment_method", read_only=True)
+    item_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CourierAssignment
         fields = [
-            "id", "order_public_id", "merchant_name",
+            "id", "order_public_id", "merchant_name", "branch_name",
+            "delivery_address", "total_amount", "payment_method", "item_count",
             "status", "attempt_number", "distance_km",
             "assigned_at", "accepted_at", "completed_at",
         ]
+
+    def get_delivery_address(self, obj):
+        snap = obj.order.address_snapshot
+        return snap.get("address_line", "") if snap else ""
+
+    def get_item_count(self, obj):
+        return obj.order.items.count()
